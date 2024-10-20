@@ -21,7 +21,11 @@ from brevitas.export import export_torch_qcdq
 from brevitas.export.inference import quant_inference_mode
 from brevitas.graph.quantize import preprocess_for_quantize
 from brevitas.graph.target.flexml import preprocess_for_flexml_quantize
+from brevitas.optim.sign_sgd import SignSGD
 from brevitas_examples.imagenet_classification.ptq.ptq_common import apply_act_equalization
+from brevitas_examples.imagenet_classification.ptq.ptq_common import apply_auto_round_learning
+from brevitas_examples.imagenet_classification.ptq.ptq_common import \
+    apply_auto_round_learning_efficient
 from brevitas_examples.imagenet_classification.ptq.ptq_common import apply_bias_correction
 from brevitas_examples.imagenet_classification.ptq.ptq_common import apply_gpfq
 from brevitas_examples.imagenet_classification.ptq.ptq_common import apply_gptq
@@ -154,6 +158,11 @@ parser.add_argument(
     type=int,
     help='Numbers of iterations for graph equalization (default: 20)')
 parser.add_argument(
+    '--learned-round-type',
+    default='none',
+    choices=['none', 'ada_round', 'auto_round'],
+    help='Learned round type (default: none)')
+parser.add_argument(
     '--learned-round-iters',
     default=1000,
     type=int,
@@ -246,12 +255,16 @@ parser.add_argument(
     type=float,
     help='Specify compression rate < 1.0 for random projection. Default is 0.0 and does not use RP.'
 )
+parser.add_argument(
+    '--optimizer',
+    default='adam',
+    choices=['adam', 'sign_sgd'],
+    help='Optimiser to use with learnable rounding (default: adam)')
 add_bool_arg(parser, 'gptq', default=False, help='GPTQ (default: disabled)')
 add_bool_arg(parser, 'gpfq', default=False, help='GPFQ (default: disabled)')
 add_bool_arg(parser, 'gpfa2q', default=False, help='GPFA2Q (default: disabled)')
 add_bool_arg(
     parser, 'gpxq-act-order', default=False, help='GPxQ Act order heuristic (default: disabled)')
-add_bool_arg(parser, 'learned-round', default=False, help='Learned round (default: disabled)')
 add_bool_arg(parser, 'calibrate-bn', default=False, help='Calibrate BN (default: disabled)')
 add_bool_arg(
     parser,
@@ -308,7 +321,7 @@ def main():
         f"{'gpfq_' if args.gpfq else ''}"
         f"{'gpfa2q_' if args.gpfa2q else ''}"
         f"{'gpxq_act_order_' if args.gpxq_act_order else ''}"
-        f"{'learned_round_' if args.learned_round else ''}"
+        f"{'learned_round_type' if args.learned_round_type != "none" else ''}"
         f"{'weight_narrow_range_' if args.weight_narrow_range else ''}"
         f"{args.bias_bit_width}bias_"
         f"{args.weight_quant_granularity}_"
@@ -333,7 +346,7 @@ def main():
         f"GPFQ P: {args.gpfq_p} - "
         f"GPxQ Act Order: {args.gpxq_act_order} - "
         f"GPFA2Q Accumulator Bit Width: {args.accumulator_bit_width} - "
-        f"Learned Round: {args.learned_round} - "
+        f"Learned Round type: {args.learned_round_type} - "
         f"Weight narrow range: {args.weight_narrow_range} - "
         f"Bias bit width: {args.bias_bit_width} - "
         f"Weight scale factors type: {args.weight_quant_granularity} - "
@@ -387,20 +400,25 @@ def main():
             equalize_merge_bias=args.graph_eq_merge_bias,
             merge_bn=not args.calibrate_bn)
     elif args.target_backend == 'fx' or args.target_backend == 'layerwise':
-        model = preprocess_for_quantize(
-            model,
-            equalize_iters=args.graph_eq_iterations,
-            equalize_merge_bias=args.graph_eq_merge_bias,
-            merge_bn=args.merge_bn,
-            channel_splitting_ratio=args.channel_splitting_ratio,
-            channel_splitting_split_input=args.channel_splitting_split_input)
+        if args.learned_round_type != "auto_round":
+            model = preprocess_for_quantize(
+                model,
+                equalize_iters=args.graph_eq_iterations,
+                equalize_merge_bias=args.graph_eq_merge_bias,
+                merge_bn=args.merge_bn,
+                channel_splitting_ratio=args.channel_splitting_ratio,
+                channel_splitting_split_input=args.channel_splitting_split_input)
     else:
         raise RuntimeError(f"{args.target_backend} backend not supported.")
 
+    device = (
+        torch.device(f"cuda:{args.gpu}")
+        if args.gpu is not None
+        else torch.device("cpu")
+    )
+    model = model.to(device=device)
     # If available, use the selected GPU
     if args.gpu is not None:
-        torch.cuda.set_device(args.gpu)
-        model = model.cuda(args.gpu)
         cudnn.benchmark = False
 
     if args.act_equalization is not None:
@@ -465,11 +483,29 @@ def main():
         print("Performing GPTQ:")
         apply_gptq(calib_loader, quant_model, act_order=args.gpxq_act_order)
 
-    if args.learned_round:
-        print("Applying Learned Round:")
+    if args.optimizer == "adam":
+        optimizer_class = torch.optim.Adam
+    elif args.optimizer == "sign_sgd":
+        optimizer_class = SignSGD
+    else:
+        raise ValueError(f"{args.optimizer} is not a valid optimizer.")
+
+    if args.learned_round_type == "auto_round":
+        print("Applying Auto Round:")
+        apply_auto_round_learning(
+            quant_model,
+            calib_loader,
+            device,
+            optimizer_class=optimizer_class,
+            iters=args.learned_round_iters,
+            optimizer_lr=args.learned_round_lr)
+
+    if args.learned_round_type == "ada_round":
+        print("Applying Learned Round (AdaRound):")
         apply_learned_round_learning(
             quant_model,
             calib_loader,
+            optimizer_class=optimizer_class,
             iters=args.learned_round_iters,
             optimizer_lr=args.learned_round_lr)
 
