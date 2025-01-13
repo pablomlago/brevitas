@@ -1575,8 +1575,10 @@ class GraphRotationEqualization(RotationEqualization):
             graph_module.recompile()
             graph_module.graph.lint()
 
-    def apply(self,
-              graph_model: GraphModule) -> Union[Tuple[GraphModule, List[Transform]], GraphModule]:
+    def apply(
+            self,
+            graph_model: GraphModule,
+            fuse_rotations: bool = True) -> Union[Tuple[GraphModule, List[Transform]], GraphModule]:
         rewriters = []
         regions = _extract_regions(
             graph_model,
@@ -1600,7 +1602,8 @@ class GraphRotationEqualization(RotationEqualization):
         if self.rotate_matmul:
             self.rotate_matmuls(graph_model)
         if len(regions) > 0:
-            rewriters = _apply_rotate(graph_model, regions, self.full_rotation_method)
+            rewriters = _apply_rotate(
+                graph_model, regions, self.full_rotation_method, fuse_rotations=fuse_rotations)
         if self.return_rewriters:
             return graph_model, rewriters
         else:

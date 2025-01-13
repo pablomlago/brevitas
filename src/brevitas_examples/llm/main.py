@@ -21,7 +21,8 @@ from brevitas.export import export_torch_qcdq
 from brevitas.export.inference.manager import quant_inference_mode
 from brevitas.export.onnx.standard.qcdq.manager import StdQCDQONNXManager
 from brevitas.graph import load_quant_model_mode
-from brevitas.graph.base import ModuleInstanceWrapModule
+from brevitas.graph.base import ModuleInstanceFuseRotationWeights
+from brevitas.graph.equalize import _fuse_rotations
 from brevitas.graph.equalize import GraphRotationEqualization
 from brevitas.graph.equalize import LayerwiseActivationRotation
 from brevitas.graph.quantize import layerwise_quantize
@@ -51,6 +52,7 @@ from brevitas_examples.llm.llm_quant.prepare_for_quantize import add_zero_bias_t
 from brevitas_examples.llm.llm_quant.prepare_for_quantize import replace_mha_with_quantizable_layers
 from brevitas_examples.llm.llm_quant.prepare_for_quantize import \
     replace_sdpa_with_quantizable_layers
+from brevitas_examples.llm.llm_quant.rotation_optimization import apply_rotation_optimization
 from brevitas_examples.llm.llm_quant.run_utils import CastFloat16ToFloat32
 from brevitas_examples.llm.llm_quant.run_utils import fix_rewriter
 from brevitas_examples.llm.llm_quant.run_utils import get_fx
@@ -78,10 +80,11 @@ def set_seed(seed):
     torch.random.manual_seed(seed)
 
 
-def fused_rotation_no_fx(model, calibration_loader, args):
+def fused_rotation_no_fx(model, calibration_loader, args, fuse_rotations: bool = True):
     with torch.no_grad():
         new_model, guards = torch._dynamo.export(model)(**calibration_loader[0])
     apply_layernorm_affine_merge(new_model)
+    # NOTE: This call breaks ties between the the lm_head and the embedding layer
     new_model, rewriters = apply_layernorm_to_rmsnorm(new_model, return_rewriters=True)
     rewriters = fix_rewriter(rewriters, model, 'weight')
 
@@ -92,13 +95,13 @@ def fused_rotation_no_fx(model, calibration_loader, args):
         orphan_sink=args.rotation_orphan_sink,
         full_rotation_method=args.rotation_mode,
         return_rewriters=True)
-    new_model, rewriters = eq.apply(new_model)
+    new_model, rewriters = eq.apply(new_model, fuse_rotations=fuse_rotations)
     rewriters = fix_rewriter(rewriters, model, 'weight')
     for r in rewriters:
         # The weights between model and new_model are tied, so this check prevents
         # rotating the weights twice
-        if isinstance(r, ModuleInstanceWrapModule):
-            r.apply(model)
+        if not isinstance(r, ModuleInstanceFuseRotationWeights):
+            model = r.apply(model)
     remove_hooks(new_model)
 
 
@@ -199,7 +202,7 @@ def validate(args):
                 "or decreasing the sequence length (seqlen)")
 
 
-def quantize_llm(args):
+def quantize_llm(args, unknown_args=None):
     validate(args)
     set_seed(args.seed)
     if args.export_prefix is None:
@@ -297,6 +300,23 @@ def quantize_llm(args):
         apply_layernorm_to_rmsnorm(model)
         print("Layernorm To RMSNorm applied.")
 
+    # TODO: Refactor
+    if args.rotation in ['fused_no_fx_optimize']:
+        for i in range(len(calibration_loader)):
+            del calibration_loader[i]["attention_mask"]
+            calibration_loader[i]["labels"] = calibration_loader[i]["input_ids"]
+
+        def mock_save_pretrained_fn(*args, **kwargs):
+            pass
+
+        # For a PretrainedModel, the Trainer in accelerate calls save_pretrained after
+        # finishing the optimization. However, this method no longer works after
+        # registering parametrizations/quantizing, so this method is mocked to prevent
+        # a crash.
+        model.save_pretrained = mock_save_pretrained_fn
+        model.config.use_cache = False
+        model.config.loss_type = "ForCausalLM"
+
     if args.rotation == 'fx':
         model = offload_model(model)
         eq = GraphRotationEqualization(
@@ -308,6 +328,8 @@ def quantize_llm(args):
         model = eq.apply(model)
     elif args.rotation == 'fused_no_fx':
         fused_rotation_no_fx(model, calibration_loader, args)
+    elif args.rotation == 'fused_no_fx_optimize':
+        fused_rotation_no_fx(model, calibration_loader, args, fuse_rotations=False)
 
     # Insert standard MHA layers when performing fx based weight/act equalization to avoid dealing
     # with all the variability in HF implementations
@@ -430,6 +452,23 @@ def quantize_llm(args):
     # We restore the original behaviour of the post-forward.
     for k, v in dict_hooks.items():
         k._hf_hook.post_forward = v
+
+    if args.rotation in ['fused_no_fx_optimize']:
+        apply_rotation_optimization(
+            model=model,
+            tokenizer=tokenizer,
+            train_dataset=calibration_loader,
+            unknown_args=unknown_args,
+        )
+        # Remove hooks from optimization
+        remove_hooks(model)
+        # Restore eval mode
+        model.eval()
+        # Offload model before fusing the rotations
+        model = offload_model(model)
+        # TODO: Make sure that ties are kept
+        # Fuse rotations with weights
+        model = _fuse_rotations(model)
 
     if args.act_calibration and not args.load_checkpoint:
         print("Apply act calibration...")
@@ -777,7 +816,7 @@ def parse_args(args, override_defaults={}):
         '--rotation',
         type=str,
         default=None,
-        choices=['fx', 'layerwise', 'fused_no_fx'],
+        choices=['fx', 'layerwise', 'fused_no_fx', 'fused_no_fx_optimize'],
         help='Apply graph rotation equalization')
     parser.add_argument(
         '--rotation-mode',
@@ -871,13 +910,13 @@ def parse_args(args, override_defaults={}):
         help='A list of tasks for zero_shot evaluation. Default: %(default)s')
     parser.set_defaults(**override_defaults)
 
-    return parser.parse_args(args)
+    return parser.parse_known_args(args)
 
 
 def main():
     overrides = override_defaults(sys.argv[1:])
-    args = parse_args(sys.argv[1:], override_defaults=overrides)
-    quantize_llm(args)
+    args, unknown_args = parse_args(sys.argv[1:], override_defaults=overrides)
+    quantize_llm(args, unknown_args)
 
 
 if __name__ == '__main__':

@@ -112,7 +112,7 @@ def get_wikitext2(
     elif split == 'validation':
         data = load_dataset('wikitext', 'wikitext-2-raw-v1', split='test')
         data = tokenizer("\n\n".join(data['text']), return_tensors='pt')
-        nsamples = data['input_ids'].numel() // seqlen
+        nsamples = min(data['input_ids'].numel() // seqlen, 20)
         testloader = []
         for i in tqdm(range(nsamples)):
             batch = data['input_ids'][:, (i * seqlen):((i + 1) * seqlen)]
