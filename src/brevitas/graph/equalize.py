@@ -1587,9 +1587,11 @@ class GraphRotationEqualization(RotationEqualization):
         return regions
 
     def apply(
-            self,
-            graph_model: GraphModule,
-            fuse_rotations: bool = True) -> Union[Tuple[GraphModule, List[Transform]], GraphModule]:
+        self,
+        graph_model: GraphModule,
+        fuse_rotations: bool = True,
+        apply_inplace_rotations: bool = True
+    ) -> Union[Tuple[GraphModule, List[Transform]], GraphModule]:
         rewriters = []
         regions = _extract_regions(
             graph_model,
@@ -1618,7 +1620,11 @@ class GraphRotationEqualization(RotationEqualization):
             self.rotate_matmuls(graph_model)
         if len(regions) > 0:
             rewriters = _apply_rotate(
-                graph_model, regions, self.full_rotation_method, fuse_rotations=fuse_rotations)
+                graph_model,
+                regions,
+                self.full_rotation_method,
+                fuse_rotations=fuse_rotations,
+                apply_inplace_rotations=apply_inplace_rotations)
         if self.return_rewriters:
             return graph_model, rewriters
         else:

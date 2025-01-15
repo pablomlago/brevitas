@@ -6,6 +6,7 @@ from contextlib import nullcontext
 from copy import deepcopy
 import functools
 import sys
+from typing import List
 from warnings import warn
 
 from lm_eval import evaluator
@@ -23,6 +24,7 @@ from brevitas.export.inference.manager import quant_inference_mode
 from brevitas.export.onnx.standard.qcdq.manager import StdQCDQONNXManager
 from brevitas.graph import load_quant_model_mode
 from brevitas.graph.base import ModuleInstanceTransformTensor
+from brevitas.graph.base import Transform
 from brevitas.graph.equalize import fuse_parametrized_rotations
 from brevitas.graph.equalize import GraphRotationEqualization
 from brevitas.graph.equalize import LayerwiseActivationRotation
@@ -40,6 +42,8 @@ from brevitas_examples.common.parse_utils import quant_format_validator
 from brevitas_examples.llm.llm_quant.bias_corr import apply_bias_correction
 from brevitas_examples.llm.llm_quant.calibrate import apply_calibration
 from brevitas_examples.llm.llm_quant.data_utils import get_dataset_for_model
+from brevitas_examples.llm.llm_quant.distributed_utils import is_main_process
+from brevitas_examples.llm.llm_quant.distributed_utils import on_main_process
 from brevitas_examples.llm.llm_quant.equalize import apply_act_equalization
 from brevitas_examples.llm.llm_quant.equalize import apply_weight_equalization
 from brevitas_examples.llm.llm_quant.eval import compute_perplexity
@@ -83,6 +87,16 @@ def set_seed(seed):
     torch.random.manual_seed(seed)
 
 
+@on_main_process
+def apply_fused_rotations(model: torch.nn.Module, rewriters: List[Transform]) -> torch.nn.Module:
+    model = offload_model(model)
+    for r in rewriters:
+        if isinstance(r, ModuleInstanceTransformTensor):
+            model = r.apply(model)
+    remove_hooks(model)
+    return model
+
+
 def fused_rotation_no_fx(model, calibration_loader, args, fuse_rotations: bool = True):
     with torch.no_grad():
         new_model, guards = torch._dynamo.export(model)(**calibration_loader[0])
@@ -93,20 +107,20 @@ def fused_rotation_no_fx(model, calibration_loader, args, fuse_rotations: bool =
 
     for r in rewriters:
         r.apply(model)
-    new_model = offload_model(new_model)
     eq = GraphRotationEqualization(
         orphan_sink=args.rotation_orphan_sink,
         full_rotation_method=args.rotation_mode,
         return_rewriters=True,
         sdpa_regions=args.rotation_sdpa_regions)
-    new_model, rewriters = eq.apply(new_model, fuse_rotations=fuse_rotations)
+    new_model, rewriters = eq.apply(new_model, fuse_rotations=fuse_rotations, apply_inplace_rotations=False)
     rewriters = fix_rewriter(rewriters, model, 'weight')
+    # Apply in-place transformation on the model weights
+    apply_fused_rotations(model, rewriters)
     for r in rewriters:
         # The weights between model and new_model are tied, so this check prevents
         # rotating the weights twice
         if not isinstance(r, ModuleInstanceTransformTensor):
             model = r.apply(model)
-    remove_hooks(new_model)
 
 
 def set_seed(seed):
@@ -273,7 +287,8 @@ def quantize_llm(args, unknown_args=None):
     device = next(iter(model.parameters())).device
     print("Data loaded.")
 
-    if args.eval:
+    # Evaluation is only done in main process
+    if args.eval and is_main_process():
         assert args.export_target != 'torch_qcdq', "TorchScript QCDQ export and Evaluation simultaneously"
         print("Float model eval...")
         model = offload_model(model)
@@ -425,22 +440,26 @@ def quantize_llm(args, unknown_args=None):
     if args.bias_corr:
         model = add_zero_bias_to_linear(model)
 
-    model = offload_model(model)
+    # Calibration only needs to be performed on the main process. When training starts, the parameters are
+    # synchronized.
+    if is_main_process():
+        model = offload_model(model)
 
-    dict_hooks = dict()
+        dict_hooks = dict()
 
-    # When offloading to CPU + GPU, the CPU scale factors must be updated
-    # before we move them back to the meta device.
-    # If we don't, we lose the new value but the internal flag "init_done" is True, thus we will use the wrong scale.
-    # To do this, we attach a "hook" to the post_forward function, called before the post_forward
-    # The function will update the dict with the initialized scales
-    for m in model.modules():
-        if hasattr(m, '_hf_hook'):
-            if m._hf_hook.weights_map is not None:
-                # We store the original function to be restored later
-                dict_hooks[m] = m._hf_hook.post_forward
-                new_funct = functools.partial(update_internal_dict, m)
-                m._hf_hook.post_forward = hooked_on_a_function(m._hf_hook.post_forward, new_funct)
+        # When offloading to CPU + GPU, the CPU scale factors must be updated
+        # before we move them back to the meta device.
+        # If we don't, we lose the new value but the internal flag "init_done" is True, thus we will use the wrong scale.
+        # To do this, we attach a "hook" to the post_forward function, called before the post_forward
+        # The function will update the dict with the initialized scales
+        for m in model.modules():
+            if hasattr(m, '_hf_hook'):
+                if m._hf_hook.weights_map is not None:
+                    # We store the original function to be restored later
+                    dict_hooks[m] = m._hf_hook.post_forward
+                    new_funct = functools.partial(update_internal_dict, m)
+                    m._hf_hook.post_forward = hooked_on_a_function(
+                        m._hf_hook.post_forward, new_funct)
 
     # If we are doing functional SDPA quantization, we create the correct context manager,
     # otherwise nullcontext. We would love to avoid the extra indentation level but it doesn't seem easy.
@@ -451,12 +470,22 @@ def quantize_llm(args, unknown_args=None):
         quantization_cm = nullcontext()
 
     with quantization_cm:
-        with torch.no_grad():
-            model(**calibration_loader[0])
+        if is_main_process():
+            with torch.no_grad():
+                model(**calibration_loader[0])
 
-        # We restore the original behaviour of the post-forward.
-        for k, v in dict_hooks.items():
-            k._hf_hook.post_forward = v
+            # We restore the original behaviour of the post-forward.
+            for k, v in dict_hooks.items():
+                k._hf_hook.post_forward = v
+        # In non-main processes, the init_flags need to be set to True, as the main process
+        # has taken care of the initialization and the appropiate values will be set in the
+        # synchronization step before the optimization starts
+        else:
+            # TODO: Generalize this logic. Currently, only ParameterFromStatsFromParameterZeroPoint
+            # and ParameterFromStatsFromParameterScaling have the attribute init_done
+            for module in model.modules():
+                if hasattr(module, "init_done"):
+                    module.init_done = True
 
         if args.rotation in ['fused_no_fx_optimize']:
             apply_rotation_optimization(
@@ -540,7 +569,7 @@ def quantize_llm(args, unknown_args=None):
                 print(f"Saving checkpoint to {args.checkpoint_name}")
                 torch.save(model.state_dict(), args.checkpoint_name)
 
-        if args.eval and not args.no_quantize:
+        if args.eval and not args.no_quantize and is_main_process():
             print("Model eval...")
             with torch.no_grad(), quant_inference_mode(model):
                 model(**calibration_loader[0])
