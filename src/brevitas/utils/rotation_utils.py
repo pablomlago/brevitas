@@ -58,11 +58,7 @@ class ScaleWeightParametrization(torch.nn.Module):
             the tensor
     """
 
-    def __init__(
-        self,
-        scaling_factor: Tensor,
-        is_sink : bool
-    ) -> None:
+    def __init__(self, scaling_factor: Tensor, is_sink: bool) -> None:
         super().__init__()
         self.scaling_factor = scaling_factor
         self.is_sink = is_sink
@@ -71,6 +67,7 @@ class ScaleWeightParametrization(torch.nn.Module):
         # Reciprocal is done on the fly as to preserve the tie between scale and its reciprocal
         scale = torch.reciprocal(self.scaling_factor) if self.is_sink else self.scaling_factor
         return tensor * scale
+
 
 def extract_trainable_rotation_matrices(model: nn.Module) -> List[nn.Parameter]:
     trainable_rotations = []
