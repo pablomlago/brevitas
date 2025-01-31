@@ -36,6 +36,7 @@ from brevitas_examples.common.accelerate_utils.accelerate import update_internal
 from brevitas_examples.common.generative.quantize import generate_quant_maps
 from brevitas_examples.common.generative.quantize import generate_quantizers
 from brevitas_examples.common.parse_utils import quant_format_validator
+from brevitas_examples.llm.llm_quant.awq.pre_quant import run_awq
 from brevitas_examples.llm.llm_quant.bias_corr import apply_bias_correction
 from brevitas_examples.llm.llm_quant.calibrate import apply_calibration
 from brevitas_examples.llm.llm_quant.data_utils import get_dataset_for_model
@@ -223,7 +224,7 @@ def quantize_llm(args):
     # Whether to quantize SDPA with FX
     quant_sdpa_fx = args.quant_sdpa and not args.replace_mha
 
-    kwargs = {"torch_dtype": dtype}
+    kwargs = {"torch_dtype": dtype, "use_cache": False}
     if quant_sdpa_fx:
         kwargs["attn_implementation"] = "sdpa"
 
@@ -237,6 +238,18 @@ def quantize_llm(args):
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     float_ppl = None
     quant_ppl = None
+
+    if args.run_awq:
+        awq_results = run_awq(
+            model,
+            tokenizer,
+            w_bit=args.weight_bit_width,
+            q_config={
+                "q_group_size": args.weight_group_size,  # whether to use group quantization
+            },
+            n_samples=128,
+            seqlen=512,
+        )
 
     if args.load_awq:
         from brevitas_examples.llm.llm_quant.awq.pre_quant import apply_awq
@@ -845,6 +858,10 @@ def parse_args(args, override_defaults={}):
         default=0.5,
         type=float,
         help='If activation equalization is enabled, decide what alpha to use')
+    parser.add_argument(
+        '--run-awq',
+        action="store_true",
+        help='Whether to run AWQ pre-processing. Default %(default)s)')
     parser.add_argument('--load-awq', type=str, default=None, help="Load the awq search results.")
     parser.add_argument(
         '--export-target',
