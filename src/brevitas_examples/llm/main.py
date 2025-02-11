@@ -108,11 +108,12 @@ def fused_rotation_no_fx(model, calibration_loader, args):
         use_parametrized_rotations=args.optimize_rotations)
     new_model, rewriters = eq.apply(new_model)
     rewriters = fix_rewriter(rewriters, model, 'weight')
-    for r in rewriters:
-        # The weights between model and new_model are tied, so this check prevents
-        # rotating the weights twice
-        if not isinstance(r, ModuleInstanceTransformTensor):
-            model = r.apply(model)
+    with torch.no_grad():
+        for r in rewriters:
+            # The weights between model and new_model are tied, so this check prevents
+            # rotating the weights twice
+            if not isinstance(r, ModuleInstanceTransformTensor):
+                model = r.apply(model)
     remove_hooks(new_model)
 
 
