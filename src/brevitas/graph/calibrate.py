@@ -1,10 +1,9 @@
 # Copyright (C) 2023, Advanced Micro Devices, Inc. All rights reserved.
 # SPDX-License-Identifier: BSD-3-Clause
 
-from abc import ABC
-from copy import deepcopy
 from functools import partial
 import sys
+from typing import List, Optional
 
 import torch
 from torch import nn
@@ -249,6 +248,38 @@ class DisableEnableQuantization(Transform):
         else:
             self.enable_act_quantization(model, is_training)
             self.enable_param_quantization(model, is_training)
+
+
+class disable_enable_quantization:
+
+    def __init__(
+            self,
+            model: nn.Module,
+            disable_quant: bool = True,
+            excluded_modules: Optional[List[nn.Module]] = None):
+        self.model = model
+        self.disable_quant = disable_quant
+        self.excluded_modules = excluded_modules if excluded_modules is not None else []
+        self.disable_quant_class = DisableEnableQuantization()
+        self.return_quant_tensor_state = None
+        self.return_quant_tensor_state
+
+    def __enter__(self):
+        if self.disable_quant:
+            self.disable_quant_class.disable_act_quantization(self.model, False)
+            self.disable_quant_class.disable_param_quantization(self.model, False)
+            self.return_quant_tensor_state = disable_return_quant_tensor(self.model)
+            # Re-enable quantization for excluded modules
+            for module in self.excluded_modules:
+                self.disable_quant_class.enable_act_quantization(module, False)
+                self.disable_quant_class.enable_param_quantization(module, False)
+                restore_return_quant_tensor(module, self.return_quant_tensor_state)
+
+    def __exit__(self, type, value, traceback):
+        if self.disable_quant:
+            self.disable_quant_class.enable_act_quantization(self.model, False)
+            self.disable_quant_class.enable_param_quantization(self.model, False)
+            restore_return_quant_tensor(self.model, self.return_quant_tensor_state)
 
 
 class _BiasCorrection(DisableEnableQuantization):
