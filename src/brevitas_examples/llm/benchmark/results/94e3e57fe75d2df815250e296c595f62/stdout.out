@@ -1,0 +1,35 @@
+Model loading...
+Model loaded.
+Data loaded.
+Float model eval...
+{'': 6425507072, 'model': 6425507072, 'model.embed_tokens': 788004864, 'model.embed_tokens.weight': 788004864, 'model.layers': 5637495808, 'model.layers.0': 201339136, 'model.layers.1': 201339136, 'model.layers.2': 201339136, 'model.layers.3': 201339136, 'model.layers.4': 201339136, 'model.layers.5': 201339136, 'model.layers.6': 201339136, 'model.layers.7': 201339136, 'model.layers.8': 201339136, 'model.layers.9': 201339136, 'model.layers.10': 201339136, 'model.layers.11': 201339136, 'model.layers.12': 201339136, 'model.layers.13': 201339136, 'model.layers.14': 201339136, 'model.layers.15': 201339136, 'model.layers.16': 201339136, 'model.layers.17': 201339136, 'model.layers.18': 201339136, 'model.layers.19': 201339136, 'model.layers.20': 201339136, 'model.layers.21': 201339136, 'model.layers.22': 201339136, 'model.layers.23': 201339136, 'model.layers.24': 201339136, 'model.layers.25': 201339136, 'model.layers.26': 201339136, 'model.layers.27': 201339136, 'model.norm': 6144, 'model.norm.weight': 6144, 'model.rotary_emb': 256, 'model.rotary_emb.inv_freq': 256}
+Float perplexity (pile_clm): 7.000
+Applying model quantization...
+Model quantization applied.
+{'': 7349377384, 'model': 6561372520, 'model.embed_tokens': 788004864, 'model.embed_tokens.weight': 788004864, 'model.layers': 5773361384, 'model.layers.0': 206191478, 'model.layers.1': 206191478, 'model.layers.2': 206191478, 'model.layers.3': 206191478, 'model.layers.4': 206191478, 'model.layers.5': 206191478, 'model.layers.6': 206191478, 'model.layers.7': 206191478, 'model.layers.8': 206191478, 'model.layers.9': 206191478, 'model.layers.10': 206191478, 'model.layers.11': 206191478, 'model.layers.12': 206191478, 'model.layers.13': 206191478, 'model.layers.14': 206191478, 'model.layers.15': 206191478, 'model.layers.16': 206191478, 'model.layers.17': 206191478, 'model.layers.18': 206191478, 'model.layers.19': 206191478, 'model.layers.20': 206191478, 'model.layers.21': 206191478, 'model.layers.22': 206191478, 'model.layers.23': 206191478, 'model.layers.24': 206191478, 'model.layers.25': 206191478, 'model.layers.26': 206191478, 'model.layers.27': 206191478, 'model.norm': 6144, 'model.norm.weight': 6144, 'lm_head': 788004864, 'lm_head.weight': 788004864, 'model.rotary_emb': 128, 'model.rotary_emb.inv_freq': 128}
+Applying GPTQ...
+GPTQ applied.
+Model eval...
+Quantized perplexity (pile_clm): 9.500
+{'all_acc': 0.5611904629694917,
+ 'all_acc_norm': 0.5980434611623302,
+ 'all_acc_norm_stderr': 0.00982533156961678,
+ 'all_acc_stderr': 0.010561002343361596,
+ 'leaderboard:arc:challenge:0_acc': 0.3395904436860068,
+ 'leaderboard:arc:challenge:0_acc_norm': 0.38054607508532423,
+ 'leaderboard:arc:challenge:0_acc_norm_stderr': 0.014188277712349822,
+ 'leaderboard:arc:challenge:0_acc_stderr': 0.013839039762820159,
+ 'leaderboard:hellaswag:0_acc': 0.4905397331208923,
+ 'leaderboard:hellaswag:0_acc_norm': 0.6620195180242979,
+ 'leaderboard:hellaswag:0_acc_norm_stderr': 0.0047205513235471465,
+ 'leaderboard:hellaswag:0_acc_stderr': 0.004988888194063276,
+ 'leaderboard:winogrande:0_acc': 0.585635359116022,
+ 'leaderboard:winogrande:0_acc_stderr': 0.013844846232268563,
+ 'lighteval:arc:easy:0_acc': 0.6725589225589226,
+ 'lighteval:arc:easy:0_acc_norm': 0.6308922558922558,
+ 'lighteval:arc:easy:0_acc_norm_stderr': 0.009901987410242726,
+ 'lighteval:arc:easy:0_acc_stderr': 0.009629415859100616,
+ 'lighteval:piqa:0_acc': 0.7176278563656148,
+ 'lighteval:piqa:0_acc_norm': 0.7187159956474428,
+ 'lighteval:piqa:0_acc_norm_stderr': 0.010490509832327424,
+ 'lighteval:piqa:0_acc_stderr': 0.010502821668555366}

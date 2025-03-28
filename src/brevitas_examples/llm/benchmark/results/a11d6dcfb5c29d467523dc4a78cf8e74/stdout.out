@@ -1,0 +1,35 @@
+Model loading...
+Model loaded.
+Data loaded.
+Float model eval...
+{'': 2471630976, 'model': 2471630976, 'model.embed_tokens': 525336576, 'model.embed_tokens.weight': 525336576, 'model.layers': 1946290176, 'model.layers.0': 121643136, 'model.layers.1': 121643136, 'model.layers.2': 121643136, 'model.layers.3': 121643136, 'model.layers.4': 121643136, 'model.layers.5': 121643136, 'model.layers.6': 121643136, 'model.layers.7': 121643136, 'model.layers.8': 121643136, 'model.layers.9': 121643136, 'model.layers.10': 121643136, 'model.layers.11': 121643136, 'model.layers.12': 121643136, 'model.layers.13': 121643136, 'model.layers.14': 121643136, 'model.layers.15': 121643136, 'model.norm': 4096, 'model.norm.weight': 4096, 'model.rotary_emb': 128, 'model.rotary_emb.inv_freq': 128}
+Float perplexity (wikitext2_clm): 8.750
+Applying model quantization...
+Model quantization applied.
+{'': 3049309088, 'model': 2523972512, 'model.embed_tokens': 525336576, 'model.embed_tokens.weight': 525336576, 'model.layers': 1998631776, 'model.layers.0': 124914486, 'model.layers.1': 124914486, 'model.layers.2': 124914486, 'model.layers.3': 124914486, 'model.layers.4': 124914486, 'model.layers.5': 124914486, 'model.layers.6': 124914486, 'model.layers.7': 124914486, 'model.layers.8': 124914486, 'model.layers.9': 124914486, 'model.layers.10': 124914486, 'model.layers.11': 124914486, 'model.layers.12': 124914486, 'model.layers.13': 124914486, 'model.layers.14': 124914486, 'model.layers.15': 124914486, 'model.norm': 4096, 'model.norm.weight': 4096, 'lm_head': 525336576, 'lm_head.weight': 525336576, 'model.rotary_emb': 64, 'model.rotary_emb.inv_freq': 64}
+Applying GPTQ...
+GPTQ applied.
+Model eval...
+Quantized perplexity (wikitext2_clm): 13.562
+{'all_acc': 0.49440578465275975,
+ 'all_acc_norm': 0.5133911987165181,
+ 'all_acc_norm_stderr': 0.009882248047562686,
+ 'all_acc_stderr': 0.01056889978106117,
+ 'leaderboard:arc:challenge:0_acc': 0.2713310580204778,
+ 'leaderboard:arc:challenge:0_acc_norm': 0.3097269624573379,
+ 'leaderboard:arc:challenge:0_acc_norm_stderr': 0.013512058415238361,
+ 'leaderboard:arc:challenge:0_acc_stderr': 0.012993807727545792,
+ 'leaderboard:hellaswag:0_acc': 0.4058952399920335,
+ 'leaderboard:hellaswag:0_acc_norm': 0.537841067516431,
+ 'leaderboard:hellaswag:0_acc_norm_stderr': 0.004975470690867138,
+ 'leaderboard:hellaswag:0_acc_stderr': 0.004900608529778596,
+ 'leaderboard:winogrande:0_acc': 0.5516969218626677,
+ 'leaderboard:winogrande:0_acc_stderr': 0.013977171307126347,
+ 'lighteval:arc:easy:0_acc': 0.5505050505050505,
+ 'lighteval:arc:easy:0_acc_norm': 0.5155723905723906,
+ 'lighteval:arc:easy:0_acc_norm_stderr': 0.010254806331961899,
+ 'lighteval:arc:easy:0_acc_stderr': 0.010207308833916035,
+ 'lighteval:piqa:0_acc': 0.6926006528835691,
+ 'lighteval:piqa:0_acc_norm': 0.690424374319913,
+ 'lighteval:piqa:0_acc_norm_stderr': 0.010786656752183345,
+ 'lighteval:piqa:0_acc_stderr': 0.010765602506939071}
