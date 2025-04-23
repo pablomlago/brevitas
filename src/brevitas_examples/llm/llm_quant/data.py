@@ -48,10 +48,25 @@ def get_pile(
         bos_preprocessing: bool = True,
         seed: int = 42):
     random.seed(seed)
-    assert bos_preprocessing, "The pile datasets requires bos_preprocessing"
     if split == 'train':
-        data = _load_dataset('pile', split, seed)
-        return get_dataset_clm(data, tokenizer, nsamples, seqlen)
+        if bos_preprocessing:
+            data = _load_dataset('pile', split, seed)
+            return get_dataset_clm(data, tokenizer, nsamples, seqlen)
+        else:
+            # TODO: Remove
+            from brevitas_examples.llm.llm_quant.awq.utils.calib_data import get_calib_dataset
+            dataset = get_calib_dataset(
+                data="pileval",
+                tokenizer=tokenizer,
+                n_samples=nsamples,
+                block_size=seqlen,
+            )
+            return list(
+                map(
+                    lambda input_ids: {
+                        "input_ids": input_ids,
+                        "attention_mask": torch.ones((1, seqlen), dtype=torch.int64)},
+                    dataset))
 
     if split == 'validation':
         warnings.warn(f"There is no available validation split for pile. Defaulting to wikitext2.")
