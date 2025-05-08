@@ -1,0 +1,30 @@
+awq_clip:
+- true
+awq_scale:
+- true
+dataset:
+- wikitext2
+dtype:
+- bfloat16
+eval:
+- true
+model:
+- facebook/opt-125m
+nsamples:
+- 128
+quantize_weight_zero_point:
+- true
+scaling_min_val:
+- 0.00001
+seed:
+- 0
+seqlen:
+- 512
+weight_bit_width:
+- 3
+weight_group_size:
+- 128
+weight_quant_granularity:
+- per_group
+weight_quant_type:
+- asym

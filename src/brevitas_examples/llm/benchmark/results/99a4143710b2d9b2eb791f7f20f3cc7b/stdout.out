@@ -1,0 +1,14 @@
+Model loading...
+Model loaded.
+Data loaded.
+Float model eval...
+{0: 16111160217.599998, 'cpu': 75713903104.0}
+{'': 250478592, 'model': 250478592, 'model.decoder': 250478592, 'model.decoder.embed_tokens': 77217792, 'model.decoder.embed_positions': 3148800, 'model.decoder.final_layer_norm': 3072, 'model.decoder.layers': 170108928}
+Float perplexity (wikitext2): 31.125
+Applying model quantization...
+Model quantization applied.
+ * Split into 60 blocks
+{0: 16068588031.999998, 'cpu': 75288674406.4}
+{'': 250480176, 'model': 250480176, 'model.decoder': 250480176, 'model.decoder.embed_tokens': 77217792, 'model.decoder.embed_positions': 3148800, 'model.decoder.final_layer_norm': 3072, 'model.decoder.layers': 170110512}
+Model eval...
+Quantized perplexity (wikitext2): 38.750
