@@ -83,7 +83,7 @@ class LearnedRoundIdentity(brevitas.jit.ScriptModule):
             max_val=torch.tensor(self.upper_lower_bound).type_as(p))
 
     def round_forward(self, x: torch.Tensor, p: torch.Tensor) -> torch.Tensor:
-        return round_ste(x + p)
+        return round_ste(x + p).to(x.dtype)
 
 
 class LearnedRoundSte(brevitas.jit.ScriptModule):

@@ -29,6 +29,7 @@ __all__ = [
     'tensor_clamp_ste_',
     'scalar_clamp_ste',
     'scalar_clamp_min_ste',
+    'signed_scalar_clamp_min_ste',
     'binary_sign_ste',
     'ternary_sign_ste',
     'round_to_zero_ste',
@@ -239,6 +240,42 @@ def scalar_clamp_min_ste(x: Tensor, min_val: float) -> Tensor:
     if torch._C._get_tracing_state():
         return torch.clamp_min(x, min_val)
     return fn_prefix.ops.autograd_ste_ops.scalar_clamp_min_ste_impl(x, min_val)
+
+
+# TODO: Change docstring
+@script_flag
+def signed_scalar_clamp_min_ste(x: Tensor, min_val: float) -> Tensor:
+    """
+    Function that implements :func:`torch.clamp_min` with a straight-through gradient estimator
+    for the gradient of output y w.r.t. to ``x``, while the gradient of y w.r.t. to ``min_val`` is
+    always ``None``.
+
+    Args:
+        x: input tensor to clamp.
+        min_val: scalar value to use as lower bound for the input tensor.
+
+    Returns:
+        Tensor: clamped output tensor.
+
+    Notes:
+        Wrapper for either :func:`~brevitas.ops.autograd_ste_ops.scalar_clamp_min_ste_impl`
+        (with env ``BREVITAS_JIT=0``) or its C++ just-in-time compiled variant
+        (with ``BREVITAS_JIT=1``).
+
+    Examples:
+        >>> x = torch.tensor([1.5, 0.4, -1.5], requires_grad=True)
+        >>> y = scalar_clamp_min_ste(x, -1.0)
+        >>> y
+        tensor([ 1.5000,  0.4000, -1.0000], grad_fn=<ScalarClampMinSteFnBackward>)
+        >>> grad = torch.tensor([0.1, -0.1, 0.1])
+        >>> y.backward(grad)
+        >>> (x.grad == grad).all().item()
+        True
+    """
+    if torch._C._get_tracing_state():
+        y_unsigned = torch.clamp_min(torch.abs(x), min_val)
+        return torch.copysign(y_unsigned, x)
+    return fn_prefix.ops.autograd_ste_ops.signed_scalar_clamp_min_ste_impl(x, min_val)
 
 
 @script_flag

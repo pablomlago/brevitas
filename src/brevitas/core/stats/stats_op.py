@@ -158,6 +158,24 @@ class PercentileInterval(brevitas.jit.ScriptModule):
         return abs_interval
 
 
+# TODO: Revert
+class OldAbsMax(brevitas.jit.ScriptModule):
+    __constants__ = ['stats_reduce_dim']
+
+    def __init__(self, stats_reduce_dim: Optional[int] = None, keepdim: bool = False) -> None:
+        super(OldAbsMax, self).__init__()
+        self.stats_reduce_dim = stats_reduce_dim
+        self.keepdim = keepdim
+
+    @brevitas.jit.script_method
+    def forward(self, x: Tensor):
+        if self.stats_reduce_dim is None:
+            return torch.max(torch.abs(x))
+        else:
+            return torch.max(torch.abs(x), dim=self.stats_reduce_dim, keepdim=self.keepdim)[0]
+
+
+# TODO: Revert name change
 class AbsMax(brevitas.jit.ScriptModule):
     __constants__ = ['stats_reduce_dim']
 
@@ -168,10 +186,13 @@ class AbsMax(brevitas.jit.ScriptModule):
 
     @brevitas.jit.script_method
     def forward(self, x: Tensor):
+        assert self.keepdim
         if self.stats_reduce_dim is None:
-            return torch.max(torch.abs(x))
+            return NotImplementedError("TODO")
         else:
-            return torch.max(torch.abs(x), dim=self.stats_reduce_dim, keepdim=self.keepdim)[0]
+            assert self.keepdim
+            values, indices = torch.max(torch.abs(x), dim=self.stats_reduce_dim, keepdim=self.keepdim)
+            return -torch.sign(torch.gather(x, dim=self.stats_reduce_dim, index=indices)) * values
 
 
 class AbsMinMax(brevitas.jit.ScriptModule):

@@ -26,13 +26,24 @@ class CacheLLM(Cache, dict):
         self.initialize_cache()
 
     def store_inputs(self, args, kwargs) -> None:
-        self["args"].append(args)
-        self["kwargs"].append(kwargs)
+        args = list(zip(*map(lambda x: list(torch.split(x, 1, dim=0)), args)))
+        self["args"].extend(args)
+        bs = len(args)
+        kwargs_split = {
+            key:
+            value if not isinstance(value, torch.Tensor) else list(torch.split(value, 1, dim=0))
+            for key,
+            value in kwargs.items()}
+        kwargs = [{
+            key: value if not isinstance(value, list) else value[i] for key,
+            value in kwargs_split.items()} for i in range(bs)]
+        self["kwargs"].extend(kwargs)
 
     def store_output(self, output) -> None:
         if isinstance(output, (tuple, list)):
             output = output[0]
-        self["output"].append(output)
+        output = list(torch.split(output, 1, dim=0))
+        self["output"].extend(output)
 
     def initialize_cache(self) -> None:
         self["args"] = []

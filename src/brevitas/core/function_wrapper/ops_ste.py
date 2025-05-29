@@ -76,6 +76,24 @@ class CeilSte(brevitas.jit.ScriptModule):
         return ceil_ste(x)
 
 
+# TODO: Revert
+class OldScalarClampMinSte(brevitas.jit.ScriptModule):
+    """
+    ScriptModule wrapper for :func:`~brevitas.function.ops_ste.scalar_clamp_min_ste`.
+    """
+
+    __constants__ = ['min_val']
+
+    def __init__(self, min_val: float) -> None:
+        super(OldScalarClampMinSte, self).__init__()
+        self.min_val = min_val
+
+    @brevitas.jit.script_method
+    def forward(self, x: torch.Tensor):
+        return scalar_clamp_min_ste(x, self.min_val)
+
+
+# TODO: Remove
 class ScalarClampMinSte(brevitas.jit.ScriptModule):
     """
     ScriptModule wrapper for :func:`~brevitas.function.ops_ste.scalar_clamp_min_ste`.
@@ -89,7 +107,23 @@ class ScalarClampMinSte(brevitas.jit.ScriptModule):
 
     @brevitas.jit.script_method
     def forward(self, x: torch.Tensor):
-        return scalar_clamp_min_ste(x, self.min_val)
+        return signed_scalar_clamp_min_ste(x, self.min_val)
+
+
+class SignedScalarClampMinSte(brevitas.jit.ScriptModule):
+    """
+    ScriptModule wrapper for :func:`~brevitas.function.ops_ste.scalar_clamp_min_ste`.
+    """
+
+    __constants__ = ['min_val']
+
+    def __init__(self, min_val: float) -> None:
+        super(SignedScalarClampMinSte, self).__init__()
+        self.min_val = min_val
+
+    @brevitas.jit.script_method
+    def forward(self, x: torch.Tensor):
+        return signed_scalar_clamp_min_ste(x, self.min_val)
 
 
 class TensorClampSte(brevitas.jit.ScriptModule):

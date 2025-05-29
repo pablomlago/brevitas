@@ -84,6 +84,15 @@ class IntQuant(brevitas.jit.ScriptModule):
 
     @brevitas.jit.script_method
     def forward(self, scale: Tensor, zero_point: Tensor, bit_width: Tensor, x: Tensor) -> Tensor:
+        #orig_shape = x.shape
+        #x_reshaped = x.reshape(-1, 128)
+        #wmin_abs = -torch.clamp(x_reshaped.min(-1)[0], max=0)
+        #wmax_abs = torch.clamp(x_reshaped.max(-1)[0], min=0)
+        #max_v = (2 * (wmax_abs < wmin_abs).int() - 1) * torch.max(wmax_abs, wmin_abs)
+        #scale = (max_v / (2 ** (bit_width - 1)))
+        #scale = torch.where(scale < 0, torch.clamp(scale, max=-1e-5), torch.clamp(scale, min=1e-5))
+        #scale = scale.reshape(orig_shape[0], orig_shape[1] // 128, 1)
+
         y_int = self.to_int(scale, zero_point, bit_width, x)
         y = y_int - zero_point
         y = y * scale

@@ -96,7 +96,7 @@ class MaxStatsScaling(ExtendedInjector):
     """
     scaling_impl_type = ScalingImplType.STATS
     scaling_stats_op = StatsOp.MAX
-    scaling_min_val = 1e-10
+    scaling_min_val = 1e-5
 
 
 class MinMaxStatsScaling(ExtendedInjector):

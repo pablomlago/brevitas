@@ -252,7 +252,8 @@ class ParameterFromStatsFromParameterScaling(brevitas.jit.ScriptModule):
         if self.init_done:
             threshold = self.stats_scaling_impl.restrict_clamp_threshold(
                 self.restrict_threshold_pre(threshold))
-            value = abs_binary_sign_grad(self.stats_scaling_impl.restrict_clamp_scaling(self.value))
+            #value = abs_binary_sign_grad(self.stats_scaling_impl.restrict_clamp_scaling(self.value))
+            value = self.stats_scaling_impl.restrict_clamp_scaling(self.value)
             value = value / threshold
             return value
         else:
@@ -268,7 +269,8 @@ class ParameterFromStatsFromParameterScaling(brevitas.jit.ScriptModule):
             threshold = self.stats_scaling_impl.restrict_clamp_threshold(
                 self.restrict_threshold_pre(threshold))
             inplace_tensor_mul(self.value.detach(), stats)
-            value = abs_binary_sign_grad(self.stats_scaling_impl.restrict_clamp_scaling(self.value))
+            value = self.stats_scaling_impl.restrict_clamp_scaling(self.value)
+            # value = abs_binary_sign_grad(self.stats_scaling_impl.restrict_clamp_scaling(self.value))
             value = value / threshold
             self.init_done = True
             return value

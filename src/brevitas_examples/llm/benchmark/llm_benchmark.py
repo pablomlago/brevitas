@@ -37,6 +37,9 @@ class LLMBenchmarkUtils(BenchmarkUtils):
     @staticmethod
     def validate(args: Namespace, extra_args: Optional[List[str]] = None) -> None:
         validate_llm_args(args=args, extra_args=extra_args)
+        # Extensiosn for AutoRound experiments
+        if args.weight_quant_granularity == 'per_channel':
+            assert args.weight_bit_width == 4, "When per_channel only bit_width=4 is allowed"
 
     @staticmethod
     def entrypoint_main(args: Namespace,

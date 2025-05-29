@@ -99,6 +99,35 @@ class ScalarClampMinSteFn(Function):
         return y
 
 
+# TODO: Change docstring
+class SignedScalarClampMinSteFn(Function):
+    """
+    Autograd function that implements ``torch.clamp_min`` with a straight-through gradient estimator
+    for the gradient of y w.r.t. to x, while the gradient of y w.r.t. to ``min_val`` is always
+    ``None``.
+
+    ``ScalarClampMinSteFn.apply(*args)`` is first aliased to :func:`scalar_clamp_min_ste_impl(*args)
+    <brevitas.ops.autograd_ste_ops.scalar_clamp_min_ste_impl>` and then wrapped by
+    :func:`~brevitas.function.ops_ste.scalar_clamp_min_ste` and invoked when env ``BREVITAS_JIT=0``.
+    See :func:`~brevitas.function.ops_ste.scalar_clamp_ste` for details on the interface and
+    examples.
+    """
+
+    @staticmethod
+    def forward(ctx, x: Tensor, min_val: float) -> Tensor:
+        y_unsigned = torch.clamp_min(torch.abs(x), min_val)
+        y = torch.copysign(y_unsigned, x)
+        return y
+
+    @staticmethod
+    def backward(ctx, grad_y: Tensor) -> Tuple[Tensor, None]:
+        return grad_y, None
+
+    @staticmethod
+    def symbolic(g, x: Tensor, min_val: float):
+        raise NotImplementedError("Implement for compatibility with ONNX export")
+
+
 class TensorClampSteFn(Function):
     """
     Autograd function that implements :func:`~brevitas.function.ops.tensor_clamp` with a
@@ -415,6 +444,10 @@ dpu_round_ste_impl = DPURoundSteFn.apply
 #: Alias for :class:`ScalarClampMinSteFn.apply(*args)
 #: <brevitas.ops.autograd_ste_ops.ScalarClampMinSteFn>`
 scalar_clamp_min_ste_impl = ScalarClampMinSteFn.apply
+
+#: Alias for :class:`SignedScalarClampMinSteFn.apply(*args)
+#: <brevitas.ops.autograd_ste_ops.SignedScalarClampMinSteFn>`
+signed_scalar_clamp_min_ste_impl = SignedScalarClampMinSteFn.apply
 
 #: Alias for :class:`ScalarClampSteFn.apply(*args)
 #: <brevitas.ops.autograd_ste_ops.ScalarClampSteFn>`

@@ -48,7 +48,7 @@ def learned_round_value_init_linear(
     **learned_round_impl_kwargs,
 ) -> torch.Tensor:
     value = torch.zeros_like(layer.weight.data)
-    return value
+    return value.to(dtype=torch.float32)
 
 
 LEARNED_ROUND_VALUE_INIT_MAP = {
@@ -90,6 +90,8 @@ class LearnedRound(ABC):
             **self.learned_round_impl_kwargs,
         )
         layer.weight_quant.init_tensor_quant(preserve_state_dict=True)
+        layer.weight_quant.tensor_quant.int_quant.float_to_int_impl.value.data = layer.weight_quant.tensor_quant.int_quant.float_to_int_impl.value.data.to(
+            dtype=torch.float32)
 
     def insert_learned_round_quantizers(self, model: nn.Module) -> None:
         for module in model.modules():

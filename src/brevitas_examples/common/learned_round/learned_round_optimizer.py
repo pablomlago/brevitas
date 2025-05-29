@@ -511,9 +511,11 @@ class LearnedRoundOptimizer:
         last_best_iter = self.iters
 
         scaler = None
-        use_amp = next(block.parameters()).dtype == torch.float32
+        #use_amp = next(block.parameters()).dtype == torch.float32
+        use_amp = True
         if use_amp:
-            scaler = GradScaler()
+            # scaler = GradScaler()
+            scaler = None
 
         # Dictionary to store the rounding parameters yielding the lowest
         # training loss
@@ -523,14 +525,17 @@ class LearnedRoundOptimizer:
         for i in pbar:
             # Sample mini-batch from cache
             idxs = torch.randperm(n_samples)[:self.batch_size]
+            # idxs =  torch.tensor(torch.range(0, n_samples-1), dtype=torch.long)[:self.batch_size]
             inputs, fp_outs = cache.sample_batch(idxs)
 
             if use_amp:
+                #with autocast(device_type="cuda" if torch.cuda.is_available() else "cpu",
+                #              dtype=self.amp_dtype):
+                #    # Run block forward to obtain quant outputs
+                quant_outs = block_forward(block, inputs)
+                fp_outs = send_to_device(fp_outs, quant_outs.device)
                 with autocast(device_type="cuda" if torch.cuda.is_available() else "cpu",
                               dtype=self.amp_dtype):
-                    # Run block forward to obtain quant outputs
-                    quant_outs = block_forward(block, inputs)
-                    fp_outs = send_to_device(fp_outs, quant_outs.device)
                     loss, loss_components = block_loss(quant_outs, fp_outs)
             else:
                 # Run block forward to obtain quant outputs
@@ -622,6 +627,10 @@ class LearnedRoundOptimizer:
                     capture_quant_input=True,
                     capture_quant_output=False,
                 )
+                # TODO: Remove
+                #for key in ['args', 'kwargs', 'output']:
+                #    cache[key] = cache[key][:512]
+
                 # Remove hooks needed to offload the model blocks to cpu
                 remove_hooks(model)
 

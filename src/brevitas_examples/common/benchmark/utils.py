@@ -98,6 +98,15 @@ def args_dict_to_command(entrypoint_parser: ArgumentParser, args_dict: Dict) -> 
     return " ".join(command_options)
 
 
+def gpxq_block_name(model_name: str) -> str:
+    if "opt" in model_name:
+        return "model.decoder.layers"
+    elif "Llama" in model_name:
+        return "model.layers"
+    elif "Qwen" in model_name:
+        return "model.layers"
+    raise ValueError(f"Blocks attribute for {model_name} is not available.")
+
 def run_args_bucket_process(
         main_entrypoint: Callable,
         id: int,
@@ -162,6 +171,9 @@ def run_args_bucket_process(
             # Record the wall-clock elapsed time when running the LLM entrypoint
             start_time = time.time()
             try:
+                args.gpxq_block_name = gpxq_block_name(args.model)
+                args.checkpoint_name = f"{job_folder}/{args.model.replace('/', '_')}_W{args.weight_bit_width}_G{"-1" if args.weight_quant_granularity != "per_group" else args.weight_group_size}.ckp"
+                print(args.checkpoint_name)
                 results, _ = main_entrypoint(args, extra_args)
                 results = {k: _make_float(v) for k, v in results.items()}
             except Exception:

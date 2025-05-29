@@ -219,8 +219,8 @@ def load_raw_dataset(dataset_name: str, split: str, seed: int = 42) -> Dataset:
         data = data.shuffle(seed=seed).select(range(10000))  # c4 is too big.
     elif dataset_name == "pile":
         if split == "train":
-            data = load_dataset("mit-han-lab/pile-val-backup", split="validation")
-            data = data.shuffle(seed=seed).select(range(10000))  # c4 is too big.
+            data = load_dataset("NeelNanda/pile-10k", split="train")
+            # data = data.shuffle(seed=seed).select(range(10000))  # c4 is too big.
         elif split == "validation":
             warnings.warn(
                 f"There is no available validation split for pile. Defaulting to wikitext2.")

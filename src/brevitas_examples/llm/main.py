@@ -165,12 +165,10 @@ def quantize_llm(args, extra_args=None):
     if args.export_prefix is None:
         args.export_prefix = f"{args.model.replace('/', '--')}"
 
-    dtype = getattr(torch, args.dtype)
-
     # Whether to quantize SDPA with FX
     quant_sdpa_fx = args.quant_sdpa and not args.replace_mha
 
-    kwargs = {"torch_dtype": dtype}
+    kwargs = {"torch_dtype": args.dtype}
     if quant_sdpa_fx:
         kwargs["attn_implementation"] = "sdpa"
 
@@ -179,6 +177,7 @@ def quantize_llm(args, extra_args=None):
 
     print("Model loading...")
     model = AutoModelForCausalLM.from_pretrained(args.model, **kwargs)
+    dtype = next(model.parameters()).dtype
     print("Model loaded.")
     model.eval()
     tokenizer = AutoTokenizer.from_pretrained(args.model)
@@ -501,9 +500,20 @@ def quantize_llm(args, extra_args=None):
                 iters = args.learned_round_iters
                 loader = calibration_loader
             remove_hooks(model)
+            from brevitas_examples.llm.calib_dataset import get_dataloader
+
+            #dataloader = get_dataloader(
+            #    tokenizer,
+            #    args.seqlen,
+            #    "NeelNanda/pile-10k",
+            #    42,
+            #    8,
+            #    args.nsamples,
+            #)
+            dataloader = loader
             apply_learned_round(
                 model,
-                loader,
+                dataloader,
                 iters=iters,
                 block_name_attribute=args.gpxq_block_name,
                 learn_scale=args.learned_round_scale,
@@ -558,7 +568,8 @@ def quantize_llm(args, extra_args=None):
         if args.eval and not args.no_quantize:
 
             print("Model eval...")
-            with torch.no_grad(), quant_inference_mode(model, compile=args.compile_eval):
+            # with torch.no_grad(), quant_inference_mode(model, compile=args.compile_eval):
+            with torch.no_grad():
                 model(**calibration_loader[0])
                 quant_ppl = compute_perplexity(
                     model, validation_loader, context_length=args.seqlen // 2, tokenizer=tokenizer)

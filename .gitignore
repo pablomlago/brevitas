@@ -71,3 +71,6 @@ docsrc/source/_templates/
 
 # Notebooks
 /notebooks/.ipynb_checkpoints/
+
+# Results
+src/brevitas_examples/llm/benchmark/results
