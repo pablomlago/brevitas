@@ -172,8 +172,8 @@ def run_args_bucket_process(
             start_time = time.time()
             try:
                 args.gpxq_block_name = gpxq_block_name(args.model)
-                args.checkpoint_name = f"{job_folder}/{args.model.replace('/', '_')}_W{args.weight_bit_width}_G{"-1" if args.weight_quant_granularity != "per_group" else args.weight_group_size}.ckp"
-                print(args.checkpoint_name)
+                #args.checkpoint_name = f"{job_folder}/{args.model.replace('/', '_')}_W{args.weight_bit_width}_G{"-1" if args.weight_quant_granularity != "per_group" else args.weight_group_size}.ckp"
+                #print(args.checkpoint_name)
                 results, _ = main_entrypoint(args, extra_args)
                 results = {k: _make_float(v) for k, v in results.items()}
             except Exception:
@@ -438,6 +438,8 @@ def benchmark(entrypoint_utils: BenchmarkUtils, args: List[str]) -> None:
     print_benchmark_summary(q, script_args, entrypoint_parser)
     # In the case of a dry-run, just stop after the output of the benchmark summary
     if script_args.dry_run:
+        df = parse_results(entrypoint_utils, script_args.results_folder)
+        df.to_csv(f"{script_args.results_folder}/results.csv", index=False)
         exit()
     # Prepare the shared queue for the processes
     args_queue = Queue()

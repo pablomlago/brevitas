@@ -74,3 +74,16 @@ docsrc/source/_templates/
 
 # Results
 src/brevitas_examples/llm/benchmark/results
+src/brevitas_examples/llm/benchmark/new_results
+src/brevitas_examples/llm/benchmark/new_results_scales
+src/brevitas_examples/llm/benchmark/new_results_scales_fix
+src/brevitas_examples/llm/benchmark/new_results_scales_grid
+src/brevitas_examples/llm/benchmark/new_results_grid
+src/brevitas_examples/llm/benchmark/new_results_grid_increased
+src/brevitas_examples/llm/benchmark/results_act_quant
+src/brevitas_examples/llm/benchmark/results_act_quant_spinquant
+src/brevitas_examples/llm/benchmark/results_act_quant_mxfp4
+
+auto_round_*.sh
+src/brevitas_examples/llm/benchmark/auto_round_*.csv
+*.slurm

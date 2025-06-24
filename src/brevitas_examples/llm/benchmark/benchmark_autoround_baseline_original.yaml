@@ -37,10 +37,8 @@ learned_round_iters:
 - 200
 - 1000
 learned_round_lr:
-- 0.001
 - 0.005
 learned_round_scale:
-- false
 - true
 learned_round_scale_lr:
 - 0.01

@@ -186,13 +186,14 @@ class AbsMax(brevitas.jit.ScriptModule):
 
     @brevitas.jit.script_method
     def forward(self, x: Tensor):
-        assert self.keepdim
         if self.stats_reduce_dim is None:
-            return NotImplementedError("TODO")
+            x_abs = torch.abs(x)
+            indices = torch.argmax(x_abs)
+            return -torch.sign(x.view(-1)[indices]) * x_abs.view(-1)[indices]
         else:
-            assert self.keepdim
-            values, indices = torch.max(torch.abs(x), dim=self.stats_reduce_dim, keepdim=self.keepdim)
-            return -torch.sign(torch.gather(x, dim=self.stats_reduce_dim, index=indices)) * values
+            values, indices = torch.max(torch.abs(x), dim=self.stats_reduce_dim, keepdim=True)
+            scale = -torch.sign(torch.gather(x, dim=self.stats_reduce_dim, index=indices)) * values
+            return scale if self.keepdim else scale.squeeze(dim=self.stats_reduce_dim)
 
 
 class AbsMinMax(brevitas.jit.ScriptModule):

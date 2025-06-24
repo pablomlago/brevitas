@@ -149,8 +149,7 @@ def apply_learned_round(
 
     lr_scheduler_kwargs = {
         "start_factor": 1.0,
-        "end_factor": 0.0,
-        "verbose": False,} if lr_scheduler_kwargs is None else lr_scheduler_kwargs
+        "end_factor": 0.0,} if lr_scheduler_kwargs is None else lr_scheduler_kwargs
     learned_round_optimizer = LearnedRoundOptimizer(
         learned_round=learned_round,
         learned_round_loss_class=learned_round_loss_class,

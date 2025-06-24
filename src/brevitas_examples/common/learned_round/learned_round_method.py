@@ -90,8 +90,14 @@ class LearnedRound(ABC):
             **self.learned_round_impl_kwargs,
         )
         layer.weight_quant.init_tensor_quant(preserve_state_dict=True)
-        layer.weight_quant.tensor_quant.int_quant.float_to_int_impl.value.data = layer.weight_quant.tensor_quant.int_quant.float_to_int_impl.value.data.to(
-            dtype=torch.float32)
+        if hasattr(layer.weight_quant.tensor_quant, "int_quant"):
+            layer.weight_quant.tensor_quant.int_quant.float_to_int_impl.value.data = layer.weight_quant.tensor_quant.int_quant.float_to_int_impl.value.data.to(
+                dtype=torch.float32)
+        elif hasattr(layer.weight_quant.tensor_quant, "float_to_int_impl"):
+            layer.weight_quant.tensor_quant.float_to_int_impl.value.data = layer.weight_quant.tensor_quant.float_to_int_impl.value.data.to(
+                dtype=torch.float32)
+        else:
+            raise NotImplementedError("Cannot set value")
 
     def insert_learned_round_quantizers(self, model: nn.Module) -> None:
         for module in model.modules():

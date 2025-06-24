@@ -34,36 +34,86 @@ learned_round:
 learned_round_fast_update:
 - true
 learned_round_iters:
-- 200
-- 1000
+- 500
 learned_round_lr:
-- 0.001
 - 0.005
+- 0.002
 learned_round_scale:
-- false
 - true
 learned_round_scale_lr:
-- 0.01
+- 0.005
+- 0.001
 learned_round_scale_momentum:
+- 0.1
 - 0.9
+
+gradient_accumulation_steps:
+- 8
+gradient_checkpointing:
+- true
+learning_rate:
+- 1.5
+log_on_each_node:
+- false
+logging_steps:
+- 10
+lr_scheduler_type:
+- cosine
+max_steps:
+- 100
+optimize_rotations:
+- true
+per_device_train_batch_size:
+- 1
+replace_rmsnorm:
+- true
+rotation:
+- fused_no_fx
+rotation_mode:
+- had
+rotation_orphan_sink:
+- true
+rotation_sdpa_regions:
+- true
+save_safetensors:
+- false
+torch_empty_cache_steps:
+- 1
+weight_decay:
+- 0.0
 
 scaling_min_val:
 - 0.0001
 weight_bit_width:
-- 2
 - 4
 weight_group_dim:
 - null
 weight_group_size:
-- 128
+- null
 weight_param_method:
 - stats
 weight_quant_format:
 - int
 weight_quant_granularity:
 - per_channel
-- per_group
 weight_quant_type:
 - sym
 weight_scale_precision:
 - float_scale
+
+input_bit_width:
+- 4
+input_group_size:
+- 32
+input_param_method:
+- stats
+input_quant_format:
+- int
+input_quant_granularity:
+- per_row
+input_quant_type:
+- asym
+input_scale_precision:
+- float_scale
+input_scale_type:
+- dynamic

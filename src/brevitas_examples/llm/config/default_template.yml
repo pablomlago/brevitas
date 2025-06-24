@@ -11,6 +11,7 @@ convert_layernorm_to_rmsnorm: false
 dataset: wikitext2
 dtype: float16
 eval: false
+expansion_step: 1
 export_prefix: null
 export_target: null
 few_shot_eval: null

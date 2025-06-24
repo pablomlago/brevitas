@@ -15,25 +15,75 @@ Set the env variable `BREVITAS_JIT=1` to speed up the quantization process. Curr
 When using `--optimize-rotations`, the rotation training procedure relies on the Trainer class (https://huggingface.co/docs/transformers/en/main_classes/trainer). Therefore, training can be further configured by passing arguments accepted by the dataclass TrainingArguments (https://huggingface.co/docs/transformers/en/main_classes/trainer#transformers.TrainingArguments), e.g. `--learning_rate`, `--weight_decay`, `per_device_train_batch_size`.
 
 ```bash
-usage: main.py [-h] [--config CONFIG] [--model MODEL] [--dtype {float32,float16,bfloat16}] [--seed SEED] [--nsamples NSAMPLES] [--nsamples-rot-calibration NSAMPLES_ROT_CALIBRATION]
-               [--seqlen SEQLEN] [--eval] [--dataset {wikitext2,c4,pile}] [--gpxq-block-name GPXQ_BLOCK_NAME] [--weight-bit-width WEIGHT_BIT_WIDTH] [--weight-param-method {stats,mse,hqo}]
-               [--weight-scale-precision {float_scale,po2_scale}] [--weight-quant-type {sym,asym}] [--weight-quant-format WEIGHT_QUANT_FORMAT]
-               [--weight-quant-granularity {per_channel,per_tensor,per_group}] [--scale-rounding-func-type {round,ceil,floor}] [--weight-group-dim {1,0}]
-               [--weight-group-size WEIGHT_GROUP_SIZE] [--quantize-weight-zero-point] [--input-bit-width INPUT_BIT_WIDTH] [--input-quant-format INPUT_QUANT_FORMAT]
-               [--input-param-method {stats,mse}] [--input-scale-precision {float_scale,po2_scale}] [--input-scale-type {static,dynamic,no_scale}] [--input-quant-type {sym,asym}]
-               [--kv-quant-type {sym,asym}] [--input-quant-granularity {per_tensor,per_row,per_group}] [--kv-quant-granularity {per_tensor,per_row,per_group}]
-               [--input-group-size INPUT_GROUP_SIZE] [--learned-round-lr LEARNED_ROUND_LR] [--learned-round-scale-lr LEARNED_ROUND_SCALE_LR]
-               [--learned-round-scale-momentum LEARNED_ROUND_SCALE_MOMENTUM] [--learned-round-iters LEARNED_ROUND_ITERS] [--learned-round-scale] [--quantize-input-zero-point]
-               [--quantize-last-layer] [--magr] [--magr-alpha MAGR_ALPHA] [--gptq] [--gpfq] [--gpxq-act-order] [--gpxq-use-quant-activations] [--gpxq-create-weight-orig]
-               [--gpxq-max-accumulator-bit-width GPXQ_MAX_ACCUMULATOR_BIT_WIDTH] [--gpxq-max-accumulator-tile-size GPXQ_MAX_ACCUMULATOR_TILE_SIZE] [--act-calibration] [--bias-corr]
-               [--ln-affine-merge] [--convert-layernorm-to-rmsnorm] [--replace-rmsnorm] [--no-quantize] [--scaling-min-val SCALING_MIN_VAL] [--quant-sdpa] [--functional-sdpa-quant]
-               [--replace-mha] [--weight-equalization] [--rotation {fx,layerwise,fused_no_fx}] [--optimize-rotations] [--rotation-mode {had,ort}] [--rotation-orphan-sink]
-               [--rotation-sdpa-regions] [--svd-quant] [--svd-quant-rank SVD_QUANT_RANK] [--svd-quant-iters SVD_QUANT_ITERS] [--act-equalization {None,layerwise,fx}]
-               [--act-equalization-alpha ACT_EQUALIZATION_ALPHA] [--load-awq LOAD_AWQ]
-               [--export-target {None,onnx_qcdq,torch_qcdq,sharded_torchmlir_group_weight,sharded_packed_torchmlir_group_weight}] [--export-prefix EXPORT_PREFIX]
-               [--checkpoint-name CHECKPOINT_NAME] [--load-checkpoint] [--fuse-sequences] [--learned-round {None,linear_round}] [--learned-round-fast-update]
-               [--few-shot-eval {lm_eval,lighteval}] [--few-shot-override-batch-size FEW_SHOT_OVERRIDE_BATCH_SIZE] [--compile-ptq] [--compile-eval] [--few-shot-zeroshot]
-               [--no-bos-preprocessing] [--few-shot-limit FEW_SHOT_LIMIT] [--few-shot-tasks [FEW_SHOT_TASKS ...]] [--rotation-layers-to-expand [ROTATION_LAYERS_TO_EXPAND ...]]
+usage: main.py [-h] [--config CONFIG] [--model MODEL]
+               [--dtype {auto,float32,float16,bfloat16}] [--seed SEED]
+               [--nsamples NSAMPLES]
+               [--nsamples-rot-calibration NSAMPLES_ROT_CALIBRATION]
+               [--seqlen SEQLEN] [--eval] [--dataset {wikitext2,c4,pile}]
+               [--gpxq-block-name GPXQ_BLOCK_NAME]
+               [--weight-bit-width WEIGHT_BIT_WIDTH]
+               [--weight-param-method {stats,mse,hqo}]
+               [--weight-scale-precision {float_scale,po2_scale}]
+               [--weight-quant-type {sym,asym}]
+               [--weight-quant-format WEIGHT_QUANT_FORMAT]
+               [--weight-quant-granularity {per_channel,per_tensor,per_group}]
+               [--scale-rounding-func-type {round,ceil,floor}]
+               [--weight-group-dim {1,0}]
+               [--weight-group-size WEIGHT_GROUP_SIZE]
+               [--quantize-weight-zero-point]
+               [--input-bit-width INPUT_BIT_WIDTH]
+               [--input-quant-format INPUT_QUANT_FORMAT]
+               [--input-param-method {stats,mse}]
+               [--input-scale-precision {float_scale,po2_scale}]
+               [--input-scale-type {static,dynamic,no_scale}]
+               [--input-quant-type {sym,asym}]
+               [--input-quant-granularity {per_tensor,per_row,per_group}]
+               [--input-group-size INPUT_GROUP_SIZE]
+               [--attn-quant-config {qkvs,kv}]
+               [--attn-bit-width ATTN_BIT_WIDTH]
+               [--attn-quant-format ATTN_QUANT_FORMAT]
+               [--attn-param-method {stats,mse}]
+               [--attn-scale-precision {float_scale,po2_scale}]
+               [--attn-scale-type {static,dynamic,no_scale}]
+               [--attn-quant-type {sym,asym}]
+               [--attn-quant-granularity {per_tensor,per_row,per_group}]
+               [--attn-group-size ATTN_GROUP_SIZE]
+               [--learned-round-lr LEARNED_ROUND_LR]
+               [--learned-round-scale-lr LEARNED_ROUND_SCALE_LR]
+               [--learned-round-scale-momentum LEARNED_ROUND_SCALE_MOMENTUM]
+               [--learned-round-iters LEARNED_ROUND_ITERS]
+               [--learned-round-scale] [--quantize-input-zero-point]
+               [--quantize-last-layer] [--magr] [--magr-alpha MAGR_ALPHA]
+               [--gptq] [--gpfq] [--gpxq-act-order]
+               [--gpxq-use-quant-activations] [--gpxq-create-weight-orig]
+               [--gpxq-max-accumulator-bit-width GPXQ_MAX_ACCUMULATOR_BIT_WIDTH]
+               [--gpxq-max-accumulator-tile-size GPXQ_MAX_ACCUMULATOR_TILE_SIZE]
+               [--act-calibration] [--bias-corr] [--ln-affine-merge]
+               [--convert-layernorm-to-rmsnorm] [--replace-rmsnorm]
+               [--no-quantize] [--scaling-min-val SCALING_MIN_VAL]
+               [--quant-sdpa {eager,functional,fx}]
+               [--eager-quant-sdpa-class EAGER_QUANT_SDPA_CLASS]
+               [--weight-equalization] [--rotation {fx,layerwise,fused_no_fx}]
+               [--optimize-rotations] [--rotation-mode {had,ort}]
+               [--rotation-orphan-sink] [--rotation-sdpa-regions]
+               [--rotation-layers-to-expand [ROTATION_LAYERS_TO_EXPAND ...]]
+               [--expansion-step EXPANSION_STEP] [--svd-quant]
+               [--svd-quant-rank SVD_QUANT_RANK]
+               [--svd-quant-iters SVD_QUANT_ITERS]
+               [--act-equalization {None,layerwise,fx}]
+               [--act-equalization-alpha ACT_EQUALIZATION_ALPHA]
+               [--export-target {None,onnx_qcdq,sharded_torchmlir_group_weight,sharded_packed_torchmlir_group_weight}]
+               [--export-prefix EXPORT_PREFIX]
+               [--checkpoint-name CHECKPOINT_NAME] [--load-checkpoint]
+               [--learned-round {None,linear_round}]
+               [--learned-round-fast-update]
+               [--few-shot-eval {lm_eval,lighteval}]
+               [--few-shot-override-batch-size FEW_SHOT_OVERRIDE_BATCH_SIZE]
+               [--compile-ptq] [--compile-eval] [--few-shot-zeroshot]
+               [--bos-preprocessing {None,document,sequence}]
+               [--few-shot-limit FEW_SHOT_LIMIT]
+               [--few-shot-tasks [FEW_SHOT_TASKS ...]] [--awq-scale]
+               [--awq-clip]
 
 options:
   -h, --help            show this help message and exit
@@ -144,7 +194,14 @@ options:
   --rotation-orphan-sink
                         If GraphRotation is enabled, decide wheter to add standalone hadamard matrices for the unfused layers
   --rotation-sdpa-regions
-                        If GraphRotation is enabled, decide wheter to equalize across SDPA
+                        If GraphRotation is enabled, decide wheter to equalize
+                        across SDPA
+  --rotation-layers-to-expand [ROTATION_LAYERS_TO_EXPAND ...]
+                        A list of module names to expand with hadamard
+                        rotation. Default: []
+  --expansion-step EXPANSION_STEP
+                        When layer expansion is set, decide how much to
+                        increase the layer sizes. Default: 1
   --svd-quant           Apply SVDQuant.
   --svd-quant-rank SVD_QUANT_RANK
                         Rank to use for SVDQuant (default: 32).
@@ -180,8 +237,9 @@ options:
   --few-shot-limit FEW_SHOT_LIMIT
                         Few shot limit. Default None)
   --few-shot-tasks [FEW_SHOT_TASKS ...]
-                        A list of tasks for zero_shot evaluation. Default: ['arc_challenge', 'arc_easy', 'winogrande', 'piqa']
-  --rotation-layers-to-expand [ROTATION_LAYERS_TO_EXPAND ...]
-                        A list of module names to expand with hadamard rotation. Default: []
+                        A list of tasks for zero_shot evaluation. Default:
+                        ['arc_challenge', 'arc_easy', 'winogrande', 'piqa']
+  --awq-scale           Whether to apply AWQ scaling (default: False).
+  --awq-clip            Whether to apply AWQ clipping (default: False).
 
 ```
