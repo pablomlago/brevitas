@@ -1,23 +1,29 @@
+====================
+Learned Round
+====================
 
-## Learned Round 
-----------------------------------------------------------
+.. contents:: Table of Contents
+   :local:
+   :depth: 3
 
-### Learned Round in Brevitas
-----------------------------------------------------------
+Motivation
+==============
 Quantization mappings generally involve a rounding operator, for which round-to-nearest (RTN) is the usual choice. 
 For instance, in symmetric integer quantization, the quantization mapping is usually written as.
 
-$\mathcal{Q}(W) := s \cdot \left(\text{clip}\left(\left\lceil\frac{W}{s}\right\rfloor + z, \text{min }\mathcal{A}, \text{max }\mathcal{A}\right) - z\right)$
+.. math::
+
+    \mathcal{Q}(W) := s \cdot \left(\text{clip}\left(\left\lceil\frac{W}{s}\right\rfloor + z, \text{min }\mathcal{A}, \text{max }\mathcal{A}\right) - z\right)
 
 Although round-to-nearest is optimal when minimizing the weight reconstruction error, 
-i.e. $\Vert W - Q(W)\Vert_2$, optimality does not hold when considering the output reconstruction loss $\Vert XW - XQ(W)$, 
+i.e. :math:`\Vert W - Q(W)\Vert_2`, optimality does not hold when considering the output reconstruction loss :math:`\Vert XW - XQ(W)\Vert_2`, 
 which is generally used as a layer-wise proxy for the quality degradation due to quantization.
 
 In this regard, the sub-optimality of round-to-nearest has been exploited in several works, namely AdaRound [1]_ and SignRound [2]_. 
 Specifically, these techniques allow each weight to be rounded to either its floor or ceiling value, 
 optimizing these choices by minimizing a local reconstruction objective.
 
-Moreover, unlike greedy algorithms (e.g., GPTQ, Qronos) that sequentially solve closed-form layer-wise objectives, 
+Moreover, unlike greedy algorithms (e.g., GPTQ [3]_, Qronos [4]_) that sequentially solve closed-form layer-wise objectives, 
 AdaRound [1]_ and SignRound [2]_ use gradient-based optimization to jointly refine the rounding decisions. 
 This can enable better adaptation to calibration data and potentially prevent overfitting, 
 as only a limited subset of the quantization grid is available for each weight. 
@@ -25,29 +31,28 @@ However, these methods require more compute, and generally have more hyperparame
 
 In Brevitas, instead of supporting this techniques in an independent way, these were unified under the common nomenclature of **Learned Round**, 
 thus enabling a finer-grained selection of its design choices, e.g. optimizer, learning rate scheduler, etc. 
-Morever, this algorithm is integrated in the PTQ pipeline for LLMs (`brevitas_examples/llm`), thus providing as extra functionality:
+Morever, this algorithm is integrated in the PTQ pipeline for LLMs (`brevitas_examples/llm <https://github.com/Xilinx/brevitas/tree/dev/src/brevitas_examples/llm>`_), thus providing as extra functionality:
 
 * Support for multiple quantization paradigms: weight-only quantization, weight and activation quantization, as well as KV quantization.
-* Composability with outlier suppression techniques, such as QuaRot [3]_, SpinQuant [4]_ or MagR [5]_. 
+* Composability with outlier suppression techniques, such as QuaRot [5]_, SpinQuant [6]_ or MagR [7]_. 
 * Support for advanced datatypes such as MXFP4.
 
----
+Learned Round in Brevitas
+============================
 
-### Deep Dive in Learned Round
-----------------------------------------------------------
 **Learned Round** reformulates rounding as a binary optimization problem, 
 in which each weight can be assigned to the **floor** or **ceil** of its quantization grid. 
 Although the problem is NP-hard, it can be relaxed into a continuous optimization using a learnable parameter inside the rounding operator. 
-Brevitas provides several functional choices for this parametrization, which are specified in `brevitas/core/function_wrapper/learned_round.py`. 
+Brevitas provides several functional choices for this parametrization, which are specified in `brevitas/core/function_wrapper/learned_round.py <https://github.com/Xilinx/brevitas/blob/master/src/brevitas/core/function_wrapper/learned_round.py>`_.
 For instance:
 
-* Sigmoid `LearnedRoundSigmoid` (used in AdaRound): $\text{round}(p;w,T) = \lfloor w \rfloor + \sigma(p/T)$.
-* Identity `LearnedRoundIdentity` (used in SignRound): $\text{round}(p;w) = \lfloor w + \text{clip}(p, -0.5, 0.5)\rceil$
+* Sigmoid ``LearnedRoundSigmoid`` (used in AdaRound): :math:`\text{round}(p;w,T) = \lfloor w \rfloor + \sigma(p/T)`.
+* Identity ``LearnedRoundIdentity`` (used in SignRound): :math:`\text{round}(p;w) = \lfloor w + \text{clip}(p, -0.5, 0.5)\rceil`.
 
-The recomended workflow for adding a custom learned round parametrization is to create a subclass of `brevitas.jit.ScriptModule` and implement its `forward` and
-`round_forward` methods analogously to the existing implementations in `brevitas/core/function_wrapper/learned_round.py`. Then, it needs to be registered it as 
-a `LearnedRoundImplType` in  `brevitas/inject/enum.py`, as well as added to `SolveTensorQuantFloatToIntImplFromEnum` in `brevitas/quant/solver/common.py`,
-so it can be resolved by the dependency injector.
+The recomended workflow for adding a custom learned round parametrization is to create a subclass of ``brevitas.jit.ScriptModule`` and implement its ``forward`` and
+``round_forward`` methods analogously to the existing implementations in `brevitas/core/function_wrapper/learned_round.py <https://github.com/Xilinx/brevitas/blob/master/src/brevitas/core/function_wrapper/learned_round.py>`_. 
+Then, it needs to be registered it as a ``LearnedRoundImplType`` in  `brevitas/inject/enum.py <https://github.com/Xilinx/brevitas/blob/master/src/brevitas/inject/enum.py>`_, 
+as well as added to ``SolveTensorQuantFloatToIntImplFromEnum`` in `brevitas/quant/solver/common.py <https://github.com/Xilinx/brevitas/blob/master/src/brevitas/quant/solver/common.py>`_, so it can be resolved by the dependency injector.
 
 .. code-block:: python
    :caption: `brevitas/core/function_wrapper/learned_round.py`
@@ -91,10 +96,10 @@ so it can be resolved by the dependency injector.
             if learned_round_impl_type == LearnedRoundImplType.CUSTOM:
                 return LearnedRoundCustom  # Resolver for custom learned round implementation
 
-`LearnedRoundOptimizer` orchestrates gradient-based optimization of the learnable round parameters (and optionally scales) during **post‑training quantization (PTQ)**. 
+``LearnedRoundOptimizer`` orchestrates gradient-based optimization of the learnable round parameters (and optionally scales) during **post‑training quantization (PTQ)**. 
 Specifically, it wires together:
 
-- A `Learned Round` parametrization (e.g. `LearnedRoundIdentity`).
+- A `Learned Round` parametrization (e.g. ``LearnedRoundIdentity``).
 - The type of the class to compute the reconstruction loss (e.g., MSE or regularized MSE).
 - Optimizers for the learnable parameters (round parameters and optionally scales).
 - Training configuration arguments (batch size, iterations, AMP dtype, etc.).
@@ -121,15 +126,14 @@ As an example, an instantiation matching the Sign Round [2]_ setup (without scal
         scale_optimizer_kwargs=None,
         scale_optimizer_class=None)
 
-Example instantiations for the LLM and Imagenet entrypoints can be found at `brevitas_examples/llm/llm_quant/learned_round_utils.py`
-and `brevitas_examples/imagenet_classification/ptq/learned_round_utils.py`, respectively.
+Example instantiations for the LLM and Imagenet entrypoints can be found at `brevitas_examples/llm/llm_quant/learned_round_utils.py <https://github.com/Xilinx/brevitas/blob/master/src/brevitas_examples/llm/llm_quant/learned_round_utils.py>`_
+and `brevitas_examples/imagenet_classification/ptq/learned_round_utils.py <https://github.com/Xilinx/brevitas/blob/master/src/brevitas_examples/imagenet_classification/ptq/learned_round_utils.py>`_, respectively.
 
-`LearnedRoundOptimizer` exposes the method `apply_learned_round`, 
+``LearnedRoundOptimizer`` exposes the method ``apply_learned_round``, ``
 which starts the optimization procedure, and requires a series of model-specific parameters, with
 the most relevant being:
 
-- `cache`: Implementation of the abstract class `Cache` (`brevitas_examples/common/learned_round/learned_round_optimizer.py`) 
-used to store block inputs/outputs during learned round.
+- ``cache``: Implementation of the abstract class ``Cache`` (`brevitas_examples/common/learned_round/learned_round_optimizer.py <https://github.com/Xilinx/brevitas/blob/master/src/brevitas_examples/common/learned_round/learned_round_optimizer.py>`_) used to store block inputs/outputs during learned round.
 
 .. code-block:: python
    :caption: `brevitas_examples/llm/llm_quant/learned_round_utils.py`
@@ -151,7 +155,7 @@ used to store block inputs/outputs during learned round.
 
         ...
 
-- `model_forward`: Function that performs a forward pass through the entire model.
+- ``model_forward``: Function that performs a forward pass through the entire model.
 
 .. code-block:: python
    :caption: `brevitas_examples/llm/llm_quant/learned_round_utils.py`
@@ -162,7 +166,7 @@ used to store block inputs/outputs during learned round.
             inputs = send_to_device(inputs, device)
         model(**inputs)
 
-- `block_forward`: Function that performs a forward pass through a single block.
+- ``block_forward``: Function that performs a forward pass through a single block.
 
 .. code-block:: python
    :caption: `brevitas_examples/llm/llm_quant/learned_round_utils.py`
@@ -177,7 +181,7 @@ used to store block inputs/outputs during learned round.
             out = out[0]
         return out
 
-- `get_blocks_fn`: Function that returns the list individual blocks of the model.
+- ``get_blocks_fn``: Function that returns the list individual blocks of the model.
 
 .. code-block:: python
    :caption: `brevitas_examples/llm/llm_quant/learned_round_utils.py`
@@ -185,22 +189,20 @@ used to store block inputs/outputs during learned round.
     def get_blocks(model: nn.Module, block_name_attribute: str) -> List[nn.Module]:
         return recurse_getattr(model, block_name_attribute)
 
-For the LLM entrypoint, these parameters are specified in `brevitas_examples/llm/llm_quant/learned_round_utils.py`, 
-while for the Imagenet entrypoint, these can be found at `brevitas_examples/imagenet_classification/ptq/learned_round_utils.py`.
+For the LLM entrypoint, these parameters are specified in `brevitas_examples/llm/llm_quant/learned_round_utils.py <https://github.com/Xilinx/brevitas/blob/master/src/brevitas_examples/llm/llm_quant/learned_round_utils.py>`_, 
+while for the Imagenet entrypoint, these can be found at `brevitas_examples/imagenet_classification/ptq/learned_round_utils.py <https://github.com/Xilinx/brevitas/blob/master/src/brevitas_examples/imagenet_classification/ptq/learned_round_utils.py>`_.
 
----
-
-### Results
-----------------------------------------------------------
+Results
+==============
 
 To demonstrate the effectivenes and flexibility of the Learned Round implementation in Brevitas, 
 its performance was compared against the Sign Round [2]_ for weight-only quantization, 
 and against GPTQ and Qronos for the rest of scenarios. 
 
 In comparison with Sign Round [2]_, Signed SGD was also used in these experiments, 
-but the number of iterations and the learning rate were decoupled, thus requiring the clipping operation in `LearnedRoundIdentity`. 
+but the number of iterations and the learning rate were decoupled, thus requiring the clipping operation in ``LearnedRoundIdentity``. 
 Moreover, the SGD optimizer was used for learning the scales, and these are parametrized directly, instead of learning the weight clipping, 
-while in Sign Round [2]_ the authors use Sign SGD to learn the weight clipping, in the same fashion as OmniQuant [6]_.
+while in Sign Round [2]_ the authors use Sign SGD to learn the weight clipping, in the same fashion as OmniQuant [8]_.
 
 Experiments were conducted on **Llama 3.2** and **Qwen 2.5** base models, sourced from **Huggingface**, using **WikiText2** for validation.
 To assess generalization, **LightEval** was used across five zero-shot reasoning tasks, reporting the normalized average accuracy for these:
@@ -209,7 +211,8 @@ To assess generalization, **LightEval** was used across five zero-shot reasoning
 - PIQA 
 - Winogrande 
 
-#### Weight-only quantization of `Llama 3.2` and `Qwen 2.5` foundation models
+Weight-only quantization of `Llama 3.2` and `Qwen 2.5` foundation models
+--------------------------------------------------------------------------
 
 The quantization configuration used is:
 
@@ -237,12 +240,13 @@ The quantization configuration used is:
     - float_scale
 
 The results for `Llama 3.2` are summarized in the following table:
+
 +------------+-----------+------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
-|                                           |                                     **w2g128**                                 |                                       **w4**                                   |                                     **w4g128**                                 |
+|                                           |                                     **W2g128**                                 |                                       **W4**                                   |                                     **W4g128**                                 |
 +------------+-----------+------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
-|                                           |               wikitext2 ↓               |               0-shot ↑               |               wikitext2 ↓               |               0-shot ↑               |               wikitext2 ↓               |               0-shot ↑               |
+|                                           |               WikiText2 ↓               |               0-shot ↑               |               WikiText2 ↓               |               0-shot ↑               |               WikiText2 ↓               |               0-shot ↑               |
 +------------+-----------+------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
-| model      | stage 1   | stage 2          |  1b         |  3b         |  8b         |   1b       |   3b       |   8b       |  1b         |  3b         |  8b         |   1b       |   3b       |   8b       |  1b         |  3b         |  8b         |   1b       |   3b       |   8b       |
+| Model      | Stage 1   | Stage 2          |  1B         |  3B         |  8B         |   1B       |   3B       |   8B       |  1B         |  3B         |  8B         |   1B       |   3B       |   8B       |  1B         |  3B         |  8B         |   1B       |   3B       |   8B       |
 +------------+-----------+------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
 | Llama-3.2  | BF16      |                  |  8.9        |  7.2        |  5.9        | 56.2       | 63.6       | 69.1       |  8.9        |  7.2        |  5.9        | 56.2       | 63.6       | 69.1       |  8.9        |  7.2        |  5.9        | 56.2       | 63.6       | 69.1       | 
 +            +-----------+------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
@@ -250,9 +254,11 @@ The results for `Llama 3.2` are summarized in the following table:
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
 |            |           | GPTQ             | 179.00      | 33.00       | 25.38       | 36.78      | 41.08      | 43.60      | 11.06       | 8.12        | 6.78        | 53.40      | 61.48      | 66.52      | 9.81        | 7.50        | 6.22        | 54.93      | 62.49      | 68.27      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
-|            |           | Qronos           | 60.00       | 21.00       | 16.12       | 38.84      | 45.68      | 50.20      | 10.75       | 7.88        | 6.62        | 53.83      | 62.00      | 67.18      | 9.62        | **7.38**    | 6.19        | 55.23      | 62.82      | 68.31      |
+|            |           | Qronos           | 60.00       | 21.00       | 16.12       | 38.84      | 45.68      | 50.20      | 10.75       | 7.88        | 6.62        | 53.83      | 62.00      | 67.18      | 9.62        | 7.38        | 6.19        | 55.23      | 62.82      | 68.31      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
-|            |           | Learned Round    | 41.67       | 18.18       | 14.13       | 43.66      | 48.76      | **55.47**  | 10.44       | 8.11        | 6.48        | 54.12      | 62.62      | 67.09      | 9.57        | 7.44        | 6.12        | 55.23      | 63.08      | 68.20      |
+|            |           | Sign Round       | 17151.00    | 36352.00    | 6304.00     | 41.71      | 51.06      | 55.21      | 10.12       | 13.38       | 10.75       | 54.73      | 62.74      | 68.20      | 9.62        | 7.38        | 6.12        | 55.23      | 63.17      | 68.37      |
++            +           +------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
+|            |           | Learned Round    | 41.67       | 18.18       | 14.13       | 43.66      | 48.76      | 55.47      | 10.44       | 8.11        | 6.48        | 54.12      | 62.62      | 67.09      | 9.57        | 7.44        | 6.12        | 55.23      | 63.08      | 68.20      |
 +            +-----------+------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
 |            | HIP       | RTN              | 143360.00   | 16128.00    | 4928.00     | 34.79      | 35.06      | 35.40      | 12.94       | 9.06        | 7.09        | 50.85      | 59.54      | 66.64      | 10.94       | 8.00        | 6.47        | 53.50      | 61.72      | 67.91      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
@@ -260,7 +266,7 @@ The results for `Llama 3.2` are summarized in the following table:
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
 |            |           | Qronos           | 77.00       | 35.25       | 20.75       | 38.38      | 41.31      | 46.14      | 10.56       | 8.12        | 6.62        | 52.94      | 61.49      | 66.53      | 9.94        | 7.62        | 6.28        | 55.02      | 62.89      | 68.35      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
-|            |           | Learned Round    | **32.53**   | **17.64**   | **13.09**   | **43.97**  | **50.57**  | 36.05      | **9.74**    | **7.65**    | **6.31**    | **55.37**  | **62.82**  | **67.98**  | **9.40**    | 7.42        | **6.09**    | **55.97**  | **63.29**  | **68.58**  |
+|            |           | Learned Round    | 32.53       | 17.64       | 13.09       | 43.97      | 50.57      | 36.05      | 9.74        | 7.65        | 6.31        | 55.37      | 62.82      | 67.98      | 9.40        | 7.42        | 6.09        | 55.97      | 63.29      | 68.58      |
 +            +-----------+------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
 |            | MagR      | RTN              | 20736.00    | 16128.00    | 5568.00     | 35.81      | 35.44      | 35.57      | 13.19       | 9.06        | 7.09        | 50.84      | 54.51      | 65.12      | 12.19       | 8.50        | 6.78        | 51.84      | 56.34      | 65.08      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
@@ -288,15 +294,17 @@ The results for `Qwen 2.5` are summarized in the following table:
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
 |            |           | Qronos           | 27.50       | 18.62       | 12.19       | 42.57      | 46.41      | 55.23      | 9.50        | 8.25        | 7.06        | 56.42      | 62.41      | 65.33      | 8.94        | 7.75        | 6.69        | 60.14      | 62.47      | 66.75      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
-|            |           | Learned Round    | 23.70       | 16.93       | 12.09       | 45.96      | 51.00      | **57.73**  | 9.85        | 8.10        | 10.04       | 59.28      | 63.27      | 65.34      | 8.86        | 7.73        | 6.68        | 59.73      | **64.22**  | 66.84      |
+|            |           | Sign Round       | 26.62       | 18.00       | 11.62       | 46.56      | 50.65      | 59.26      | 9.19        | 8.00        | 6.84        | 58.88      | 62.41      | 65.93      | 8.94        | 7.75        | 6.62        | 60.46      | 63.99      | 66.79      |
++            +           +------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
+|            |           | Learned Round    | 23.70       | 16.93       | 12.09       | 45.96      | 51.00      | 57.73      | 9.85        | 8.10        | 10.04       | 59.28      | 63.27      | 65.34      | 8.86        | 7.73        | 6.68        | 59.73      | 64.22      | 66.84      |
 +            +-----------+------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
 |            | HIP       | RTN              | 14208.00    | 95420416.00 | 536.00      | 34.83      | 35.06      | 37.65      | 9.94        | 11.81       | 8.00        | 56.84      | 59.66      | 62.94      | 9.31        | 8.25        | 6.78        | 59.73      | 62.51      | 65.94      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
-|            |           | GPTQ             | 23.12       | 15.88       | 10.94       | 43.71      | 45.93      | 52.79      | **9.06**    | **7.88**    | **6.94**    | **59.81**  | 63.56      | 65.70      | 8.75        | **7.62**    | **6.62**    | 59.66      | 63.73      | 66.48      |
+|            |           | GPTQ             | 23.12       | 15.88       | 10.94       | 43.71      | 45.93      | 52.79      | 9.06        | 7.88        | 6.94        | 59.81      | 63.56      | 65.70      | 8.75        | 7.62        | 6.62        | 59.66      | 63.73      | 66.48      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
-|            |           | Qronos           | 20.38       | 15.19       | **10.75**   | 45.99      | 47.02      | 55.92      | **9.06**    | **7.88**    | **6.94**    | 58.69      | 62.78      | **66.19**  | 8.75        | 7.75        | **6.62**    | **60.29**  | 63.16      | **66.87**  |
+|            |           | Qronos           | 20.38       | 15.19       | 10.75       | 45.99      | 47.02      | 55.92      | 9.06        | 7.88        | 6.94        | 58.69      | 62.78      | 66.19      | 8.75        | 7.75        | 6.62        | 60.29      | 63.16      | 66.87      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
-|            |           | Learned Round    | **18.72**   | **13.48**   | 11.49       | 46.55      | **52.08**  | 57.49      | 11.84       | 7.99        | 7.46        | 52.57      | **64.18**  | 65.72      | **8.74**    | 7.63        | 6.69        | 59.93      | 64.06      | 66.42      |
+|            |           | Learned Round    | 18.72       | 13.48       | 11.49       | 46.55      | 52.08      | 57.49      | 11.84       | 7.99        | 7.46        | 52.57      | 64.18      | 65.72      | 8.74        | 7.63        | 6.69        | 59.93      | 64.06      | 66.42      |
 +            +-----------+------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
 |            | MagR      | RTN              | 56320.00    | 68096.00    | 1696.00     | 35.55      | 35.15      | 36.15      | 10.56       | 9.06        | 7.50        | 55.31      | 59.89      | 64.93      | 10.12       | 8.62        | 7.28        | 56.66      | 61.02      | 66.33      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
@@ -307,7 +315,9 @@ The results for `Qwen 2.5` are summarized in the following table:
 |            |           | Learned Round    | 22.49       | 15.79       |             | **46.83**  | 48.03      |            | 10.14       | 8.08        |             | 58.21      | 63.07      |            | 9.03        | 7.80        |             | 59.14      | 63.44      |            |
 +------------+-----------+------------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+-------------+-------------+-------------+------------+------------+------------+
 
-#### Weight and activation quantization of Llama 3.2 foundation models
+
+Weight and activation quantization of `Llama 3.2` foundation models
+--------------------------------------------------------------------
 
 The quantization configuration used is:
 
@@ -369,11 +379,11 @@ The results for `Llama 3.2` are summarized in the following table:
 +            +-----------+------------------+-------------+-------------+-------------+------------+------------+------------+
 |            | HIP       | RTN              | 18.25       | 10.56       | 8.38        | 45.78      | 55.25      | 61.33      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+
-|            |           | GPTQ             | 13.19       | **8.75**    | 7.50        | 48.49      | 58.35      | 62.76      |
+|            |           | GPTQ             | 13.19       | 8.75        | 7.50        | 48.49      | 58.35      | 62.76      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+
 |            |           | Qronos           | 13.19       | 9.19        | 7.62        | 48.40      | 58.24      | 62.85      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+
-|            |           | Learned Round    | **12.32**   | 8.78        | **7.23**    | **50.57**  | **59.09**  | **63.70**  |
+|            |           | Learned Round    | 12.32       | 8.78        | 7.23        | 50.57      | 59.09      | 63.70      |
 +            +-----------+------------------+-------------+-------------+-------------+------------+------------+------------+
 |            | MagR      | RTN              | 5920.00     | 8096.00     | 24960.00    | 34.94      | 35.03      | 34.75      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+
@@ -400,7 +410,8 @@ The results for `Llama 3.2` are summarized in the following table:
 |            |           | Learned Round    | 13.52       | 9.41        | 7.59        | 50.22      | 57.08      | 62.22      |
 +------------+-----------+------------------+-------------+-------------+-------------+------------+------------+------------+
 
-#### MXFP4 weight and activation quantization of Llama 3.2 foundation models
+MXFP4 weight and activation quantization of `Llama 3.2` foundation models
+----------------------------------------------------------------------------
 
 The quantization configuration used is:
 
@@ -466,11 +477,11 @@ The results for `Llama 3.2` are summarized in the following table:
 +            +-----------+------------------+-------------+-------------+-------------+------------+------------+------------+
 |            | HIP       | RTN              | 13.19       | 8.94        | 7.28        | 50.42      | 59.21      | 65.99      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+
-|            |           | GPTQ             | 11.06       | **8.25**    | 6.78        | 52.49      | 60.98      | 65.94      |
+|            |           | GPTQ             | 11.06       | 8.25        | 6.78        | 52.49      | 60.98      | 65.94      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+
 |            |           | Qronos           | 11.62       | 8.50        | 7.06        | 51.58      | 59.72      | 65.54      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+
-|            |           | Learned Round    | **11.01**   | 8.38        | **6.70**    | **53.05**  | **61.11**  | 65.64      |
+|            |           | Learned Round    | 11.01       | 8.38        | 6.70        | 53.05      | 61.11      | 65.64      |
 +            +-----------+------------------+-------------+-------------+-------------+------------+------------+------------+
 |            | MagR      | RTN              | 18.88       | 12.00       | 8.94        | 46.03      | 48.84      | 57.59      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+
@@ -488,7 +499,7 @@ The results for `Llama 3.2` are summarized in the following table:
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+
 |            |           | Learned Round    | 11.69       | 8.40        | 6.86        | 52.35      | 60.26      | 41.28      |
 +            +-----------+------------------+-------------+-------------+-------------+------------+------------+------------+
-|            | SpinQuant | RTN              | 12.00       | 8.75        | 7.16        | 51.92      | 59.35      | **66.01**  |
+|            | SpinQuant | RTN              | 12.00       | 8.75        | 7.16        | 51.92      | 59.35      | 66.01      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+
 |            |           | GPTQ             | 12.38       | 9.62        | 8.12        | 51.06      | 58.37      | 62.93      |
 +            +           +------------------+-------------+-------------+-------------+------------+------------+------------+
@@ -501,7 +512,9 @@ The results for `Llama 3.2` are summarized in the following table:
 
 .. [1] Nagel, M., Amjad, R. A., Van Baalen, M., Louizos, C., & Blankevoort, T. (2020, November). Up or down? adaptive rounding for post-training quantization. In International conference on machine learning (pp. 7197-7206). PMLR. 
 .. [2] Cheng, W., Zhang, W., Shen, H., Cai, Y., He, X., Kaokao, L., & Liu, Y. (2024, November). Optimize weight rounding via signed gradient descent for the quantization of llms. In Findings of the Association for Computational Linguistics: EMNLP 2024 (pp. 11332-11350).
-.. [3] Ashkboos, S., Mohtashami, A., Croci, M. L., Li, B., Cameron, P., Jaggi, M., ... & Hensman, J. (2024). Quarot: Outlier-free 4-bit inference in rotated llms. Advances in Neural Information Processing Systems, 37, 100213-100240.
-.. [4] Liu, Z., Zhao, C., Fedorov, I., Soran, B., Choudhary, D., Krishnamoorthi, R., ... & Blankevoort, T. (2024). Spinquant: Llm quantization with learned rotations. arXiv preprint arXiv:2405.16406.
-.. [5] Zhang, A., Wang, N., Deng, Y., Li, X., Yang, Z., & Yin, P. (2024). Magr: Weight magnitude reduction for enhancing post-training quantization. Advances in neural information processing systems, 37, 85109-85130.
-.. [6] Shao, W., Chen, M., Zhang, Z., Xu, P., Zhao, L., Li, Z., ... & Luo, P. (2023). Omniquant: Omnidirectionally calibrated quantization for large language models. arXiv preprint arXiv:2308.13137.
+.. [3] Frantar, E., Ashkboos, S., Hoefler, T., & Alistarh, D. (2022). Gptq: Accurate post-training quantization for generative pre-trained transformers. arXiv preprint arXiv:2210.17323. 
+.. [4] Zhang, S., Zhang, H., Colbert, I., & Saab, R. (2025). Qronos: Correcting the Past by Shaping the Future... in Post-Training Quantization. arXiv preprint arXiv:2505.11695. 
+.. [5] Ashkboos, S., Mohtashami, A., Croci, M. L., Li, B., Cameron, P., Jaggi, M., ... & Hensman, J. (2024). Quarot: Outlier-free 4-bit inference in rotated llms. Advances in Neural Information Processing Systems, 37, 100213-100240.
+.. [6] Liu, Z., Zhao, C., Fedorov, I., Soran, B., Choudhary, D., Krishnamoorthi, R., ... & Blankevoort, T. (2024). Spinquant: Llm quantization with learned rotations. arXiv preprint arXiv:2405.16406.
+.. [7] Zhang, A., Wang, N., Deng, Y., Li, X., Yang, Z., & Yin, P. (2024). Magr: Weight magnitude reduction for enhancing post-training quantization. Advances in neural information processing systems, 37, 85109-85130.
+.. [8] Shao, W., Chen, M., Zhang, Z., Xu, P., Zhao, L., Li, Z., ... & Luo, P. (2023). Omniquant: Omnidirectionally calibrated quantization for large language models. arXiv preprint arXiv:2308.13137.
