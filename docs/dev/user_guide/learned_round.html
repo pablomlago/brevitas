@@ -1,0 +1,1691 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>## Learned Round &#8212; Brevitas Documentation - dev</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=3ee479438cf8b5e0d341" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=3ee479438cf8b5e0d341" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=3ee479438cf8b5e0d341" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=3ee479438cf8b5e0d341"></script>
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'user_guide/learned_round';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.15.3';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://xilinx.github.io/brevitas/dev/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'dev';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner = false;
+        </script>
+    <link rel="author" title="About these documents" href="../about.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Settings" href="../settings.html" />
+    <link rel="prev" title="Shark-AI Export" href="export_shark.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/brevitas_logo_black.svg" class="logo__image only-light" alt="Brevitas Documentation - dev - Home"/>
+    <script>document.write(`<img src="../_static/brevitas_logo_white.svg" class="logo__image only-dark" alt="Brevitas Documentation - dev - Home"/>`);</script>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav class="navbar-nav">
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../setup.html">
+    Setup
+  </a>
+</li>
+
+
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../getting_started.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../papers/index.html">
+    Papers
+  </a>
+</li>
+
+
+<li class="nav-item pst-header-nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    User Guides
+  </a>
+</li>
+
+
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../settings.html">
+    Settings
+  </a>
+</li>
+
+            <li class="nav-item dropdown pst-header-nav-item">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class="nav-item ">
+  <a class="nav-link dropdown-item nav-internal" href="../faq.html">
+    FAQ
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link dropdown-item nav-internal" href="../api_reference/index.html">
+    API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link dropdown-item nav-internal" href="../about.html">
+    About
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+ <script>
+ document.write(`
+   <button class="btn navbar-btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+    </div>
+  
+
+  
+    <button class="sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav class="navbar-nav">
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../setup.html">
+    Setup
+  </a>
+</li>
+
+
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../getting_started.html">
+    Getting Started
+  </a>
+</li>
+
+
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../papers/index.html">
+    Papers
+  </a>
+</li>
+
+
+<li class="nav-item pst-header-nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    User Guides
+  </a>
+</li>
+
+
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../settings.html">
+    Settings
+  </a>
+</li>
+
+
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../faq.html">
+    FAQ
+  </a>
+</li>
+
+
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../api_reference/index.html">
+    API reference
+  </a>
+</li>
+
+
+<li class="nav-item pst-header-nav-item">
+  <a class="nav-link nav-internal" href="../about.html">
+    About
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch nav-link" data-mode="light"><i class="fa-solid fa-sun fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="dark"><i class="fa-solid fa-moon fa-lg"></i></span>
+    <span class="theme-switch nav-link" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg"></i></span>
+  </button>
+`);
+</script></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compile.html">Brevitas and Compile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rotations.html">Hadamard Rotations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="export_gguf.html">GGUF Export</a></li>
+<li class="toctree-l1"><a class="reference internal" href="export_shark.html">Shark-AI Export</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">## Learned Round</a></li>
+
+
+
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">User Guides</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">## Learned Round</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="learned-round">
+<h1>## Learned Round<a class="headerlink" href="#learned-round" title="Permalink to this heading">#</a></h1>
+</section>
+<section id="learned-round-in-brevitas">
+<h1>### Learned Round in Brevitas<a class="headerlink" href="#learned-round-in-brevitas" title="Permalink to this heading">#</a></h1>
+<p>Quantization mappings generally involve a rounding operator, for which round-to-nearest (RTN) is the usual choice.
+For instance, in symmetric integer quantization, the quantization mapping is usually written as.</p>
+<p>$mathcal{Q}(W) := s cdot left(text{clip}left(leftlceilfrac{W}{s}rightrfloor + z, text{min }mathcal{A}, text{max }mathcal{A}right) - zright)$</p>
+<p>Although round-to-nearest is optimal when minimizing the weight reconstruction error,
+i.e. $Vert W - Q(W)Vert_2$, optimality does not hold when considering the output reconstruction loss $Vert XW - XQ(W)$,
+which is generally used as a layer-wise proxy for the quality degradation due to quantization.</p>
+<p>In this regard, the sub-optimality of round-to-nearest has been exploited in several works, namely AdaRound <a class="footnote-reference brackets" href="#id13" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a> and SignRound <a class="footnote-reference brackets" href="#id14" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a>.
+Specifically, these techniques allow each weight to be rounded to either its floor or ceiling value,
+optimizing these choices by minimizing a local reconstruction objective.</p>
+<p>Moreover, unlike greedy algorithms (e.g., GPTQ, Qronos) that sequentially solve closed-form layer-wise objectives,
+AdaRound <a class="footnote-reference brackets" href="#id13" id="id3" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a> and SignRound <a class="footnote-reference brackets" href="#id14" id="id4" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a> use gradient-based optimization to jointly refine the rounding decisions.
+This can enable better adaptation to calibration data and potentially prevent overfitting,
+as only a limited subset of the quantization grid is available for each weight.
+However, these methods require more compute, and generally have more hyperparameters that need to selected to achieve optimal performance.</p>
+<p>In Brevitas, instead of supporting this techniques in an independent way, these were unified under the common nomenclature of <strong>Learned Round</strong>,
+thus enabling a finer-grained selection of its design choices, e.g. optimizer, learning rate scheduler, etc.
+Morever, this algorithm is integrated in the PTQ pipeline for LLMs (<cite>brevitas_examples/llm</cite>), thus providing as extra functionality:</p>
+<ul class="simple">
+<li><p>Support for multiple quantization paradigms: weight-only quantization, weight and activation quantization, as well as KV quantization.</p></li>
+<li><p>Composability with outlier suppression techniques, such as QuaRot <a class="footnote-reference brackets" href="#id15" id="id5" role="doc-noteref"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></a>, SpinQuant <a class="footnote-reference brackets" href="#id16" id="id6" role="doc-noteref"><span class="fn-bracket">[</span>4<span class="fn-bracket">]</span></a> or MagR <a class="footnote-reference brackets" href="#id17" id="id7" role="doc-noteref"><span class="fn-bracket">[</span>5<span class="fn-bracket">]</span></a>.</p></li>
+<li><p>Support for advanced datatypes such as MXFP4.</p></li>
+</ul>
+<p>—</p>
+</section>
+<section id="deep-dive-in-learned-round">
+<h1>### Deep Dive in Learned Round<a class="headerlink" href="#deep-dive-in-learned-round" title="Permalink to this heading">#</a></h1>
+<p><strong>Learned Round</strong> reformulates rounding as a binary optimization problem,
+in which each weight can be assigned to the <strong>floor</strong> or <strong>ceil</strong> of its quantization grid.
+Although the problem is NP-hard, it can be relaxed into a continuous optimization using a learnable parameter inside the rounding operator.
+Brevitas provides several functional choices for this parametrization, which are specified in <cite>brevitas/core/function_wrapper/learned_round.py</cite>.
+For instance:</p>
+<ul class="simple">
+<li><p>Sigmoid <cite>LearnedRoundSigmoid</cite> (used in AdaRound): $text{round}(p;w,T) = lfloor w rfloor + sigma(p/T)$.</p></li>
+<li><p>Identity <cite>LearnedRoundIdentity</cite> (used in SignRound): $text{round}(p;w) = lfloor w + text{clip}(p, -0.5, 0.5)rceil$</p></li>
+</ul>
+<p>The recomended workflow for adding a custom learned round parametrization is to create a subclass of <cite>brevitas.jit.ScriptModule</cite> and implement its <cite>forward</cite> and
+<cite>round_forward</cite> methods analogously to the existing implementations in <cite>brevitas/core/function_wrapper/learned_round.py</cite>. Then, it needs to be registered it as
+a <cite>LearnedRoundImplType</cite> in  <cite>brevitas/inject/enum.py</cite>, as well as added to <cite>SolveTensorQuantFloatToIntImplFromEnum</cite> in <cite>brevitas/quant/solver/common.py</cite>,
+so it can be resolved by the dependency injector.</p>
+<div class="literal-block-wrapper docutils container" id="id19">
+<div class="code-block-caption"><span class="caption-text"><cite>brevitas/core/function_wrapper/learned_round.py</cite></span><a class="headerlink" href="#id19" title="Permalink to this code">#</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span> <span class="k">class</span><span class="w"> </span><span class="nc">LearnedRoundCustom</span><span class="p">(</span><span class="n">brevitas</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">ScriptModule</span><span class="p">):</span>
+<span class="w">     </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">     Custom learned round parametrization.</span>
+<span class="sd">     &quot;&quot;&quot;</span>
+     <span class="nd">@brevitas</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">script_method</span>
+     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+         <span class="o">...</span>
+
+     <span class="nd">@brevitas</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">script_method</span>
+     <span class="k">def</span><span class="w"> </span><span class="nf">round_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+         <span class="o">...</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id20">
+<div class="code-block-caption"><span class="caption-text"><cite>brevitas/inject/enum.py</cite></span><a class="headerlink" href="#id20" title="Permalink to this code">#</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span> <span class="k">class</span><span class="w"> </span><span class="nc">LearnedRoundImplType</span><span class="p">(</span><span class="n">AutoName</span><span class="p">):</span>
+<span class="w">     </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">     &quot;&quot;&quot;</span>
+     <span class="n">HARD_SIGMOID</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+     <span class="n">SIGMOID</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+     <span class="n">IDENTITY</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+     <span class="n">CUSTOM</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>  <span class="c1"># New entry for custom learned round implementation</span>
+</pre></div>
+</div>
+</div>
+<div class="literal-block-wrapper docutils container" id="id21">
+<div class="code-block-caption"><span class="caption-text"><cite>brevitas/quant/solver/common.py</cite></span><a class="headerlink" href="#id21" title="Permalink to this code">#</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span> <span class="k">class</span><span class="w"> </span><span class="nc">SolveTensorQuantFloatToIntImplFromEnum</span><span class="p">(</span><span class="n">ExtendedInjector</span><span class="p">):</span>
+     <span class="o">...</span>
+     <span class="nd">@value</span>
+     <span class="k">def</span><span class="w"> </span><span class="nf">learned_round_impl</span><span class="p">(</span><span class="n">learned_round_impl_type</span><span class="p">):</span>
+         <span class="k">if</span> <span class="n">learned_round_impl_type</span> <span class="o">==</span> <span class="n">LearnedRoundImplType</span><span class="o">.</span><span class="n">SIGMOID</span><span class="p">:</span>
+             <span class="k">return</span> <span class="n">LearnedRoundSigmoid</span>
+         <span class="k">if</span> <span class="n">learned_round_impl_type</span> <span class="o">==</span> <span class="n">LearnedRoundImplType</span><span class="o">.</span><span class="n">HARD_SIGMOID</span><span class="p">:</span>
+             <span class="k">return</span> <span class="n">LearnedRoundHardSigmoid</span>
+         <span class="k">if</span> <span class="n">learned_round_impl_type</span> <span class="o">==</span> <span class="n">LearnedRoundImplType</span><span class="o">.</span><span class="n">IDENTITY</span><span class="p">:</span>
+             <span class="k">return</span> <span class="n">LearnedRoundIdentity</span>
+         <span class="k">if</span> <span class="n">learned_round_impl_type</span> <span class="o">==</span> <span class="n">LearnedRoundImplType</span><span class="o">.</span><span class="n">CUSTOM</span><span class="p">:</span>
+             <span class="k">return</span> <span class="n">LearnedRoundCustom</span>  <span class="c1"># Resolver for custom learned round implementation</span>
+</pre></div>
+</div>
+</div>
+<p><cite>LearnedRoundOptimizer</cite> orchestrates gradient-based optimization of the learnable round parameters (and optionally scales) during <strong>post‑training quantization (PTQ)</strong>.
+Specifically, it wires together:</p>
+<ul class="simple">
+<li><p>A <cite>Learned Round</cite> parametrization (e.g. <cite>LearnedRoundIdentity</cite>).</p></li>
+<li><p>The type of the class to compute the reconstruction loss (e.g., MSE or regularized MSE).</p></li>
+<li><p>Optimizers for the learnable parameters (round parameters and optionally scales).</p></li>
+<li><p>Training configuration arguments (batch size, iterations, AMP dtype, etc.).</p></li>
+</ul>
+<p>As an example, an instantiation matching the Sign Round <a class="footnote-reference brackets" href="#id14" id="id8" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a> setup (without scale optimization) would be as follows:</p>
+<div class="literal-block-wrapper docutils container" id="id22">
+<div class="code-block-caption"><span class="caption-text"><cite>brevitas_examples/common/learned_round/learned_round_optimizer.py</cite></span><a class="headerlink" href="#id22" title="Permalink to this code">#</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span> <span class="n">learned_round_optimizer</span> <span class="o">=</span> <span class="n">LearnedRoundOptimizer</span><span class="p">(</span>
+     <span class="n">learned_round</span><span class="o">=</span><span class="n">LearnedRoundImplType</span><span class="o">.</span><span class="n">IDENTITY</span><span class="p">,</span>
+     <span class="n">learned_round_loss_class</span><span class="o">=</span><span class="n">MSELoss</span><span class="p">,</span>
+     <span class="n">optimizer_class</span><span class="o">=</span><span class="n">SignSGD</span><span class="p">,</span>
+     <span class="n">lr_scheduler_class</span><span class="o">=</span><span class="n">LinearLR</span><span class="p">,</span>
+     <span class="n">batch_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+     <span class="n">iters</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+     <span class="n">learn_scale</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+     <span class="n">use_best_model</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+     <span class="n">amp_dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float16</span><span class="p">,</span>
+     <span class="n">loss_scaling_factor</span><span class="o">=</span><span class="mf">1000.</span><span class="p">,</span>
+     <span class="n">learned_round_loss_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+     <span class="n">optimizer_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;lr&quot;</span><span class="p">:</span> <span class="mf">5e-3</span><span class="p">},</span>
+     <span class="n">lr_scheduler_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;start_factor&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;end_factor&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+     <span class="n">scale_optimizer_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+     <span class="n">scale_optimizer_class</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Example instantiations for the LLM and Imagenet entrypoints can be found at <cite>brevitas_examples/llm/llm_quant/learned_round_utils.py</cite>
+and <cite>brevitas_examples/imagenet_classification/ptq/learned_round_utils.py</cite>, respectively.</p>
+<p><cite>LearnedRoundOptimizer</cite> exposes the method <cite>apply_learned_round</cite>,
+which starts the optimization procedure, and requires a series of model-specific parameters, with
+the most relevant being:</p>
+<ul class="simple">
+<li><p><cite>cache</cite>: Implementation of the abstract class <cite>Cache</cite> (<cite>brevitas_examples/common/learned_round/learned_round_optimizer.py</cite>)</p></li>
+</ul>
+<p>used to store block inputs/outputs during learned round.</p>
+<div class="literal-block-wrapper docutils container" id="id23">
+<div class="code-block-caption"><span class="caption-text"><cite>brevitas_examples/llm/llm_quant/learned_round_utils.py</cite></span><a class="headerlink" href="#id23" title="Permalink to this code">#</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span> <span class="k">class</span><span class="w"> </span><span class="nc">CacheLLM</span><span class="p">(</span><span class="n">Cache</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+
+     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+         <span class="bp">self</span><span class="o">.</span><span class="n">initialize_cache</span><span class="p">()</span>
+
+     <span class="k">def</span><span class="w"> </span><span class="nf">store_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+         <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;args&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+         <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;kwargs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+     <span class="k">def</span><span class="w"> </span><span class="nf">store_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+             <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+         <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+
+     <span class="o">...</span>
+</pre></div>
+</div>
+</div>
+<ul class="simple">
+<li><p><cite>model_forward</cite>: Function that performs a forward pass through the entire model.</p></li>
+</ul>
+<div class="literal-block-wrapper docutils container" id="id24">
+<div class="code-block-caption"><span class="caption-text"><cite>brevitas_examples/llm/llm_quant/learned_round_utils.py</cite></span><a class="headerlink" href="#id24" title="Permalink to this code">#</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span> <span class="k">def</span><span class="w"> </span><span class="nf">llm_forward</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+     <span class="n">device</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span><span class="o">.</span><span class="n">device</span>
+     <span class="k">if</span> <span class="n">device</span> <span class="o">!=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;meta&quot;</span><span class="p">):</span>
+         <span class="n">inputs</span> <span class="o">=</span> <span class="n">send_to_device</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+     <span class="n">model</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<ul class="simple">
+<li><p><cite>block_forward</cite>: Function that performs a forward pass through a single block.</p></li>
+</ul>
+<div class="literal-block-wrapper docutils container" id="id25">
+<div class="code-block-caption"><span class="caption-text"><cite>brevitas_examples/llm/llm_quant/learned_round_utils.py</cite></span><a class="headerlink" href="#id25" title="Permalink to this code">#</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span> <span class="k">def</span><span class="w"> </span><span class="nf">llm_block_forward</span><span class="p">(</span><span class="n">block</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+     <span class="n">device</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span><span class="o">.</span><span class="n">device</span>
+     <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="n">inputs</span>
+     <span class="n">args</span> <span class="o">=</span> <span class="n">send_to_device</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+     <span class="n">kwargs</span> <span class="o">=</span> <span class="n">send_to_device</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+     <span class="n">out</span> <span class="o">=</span> <span class="n">block</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+         <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+     <span class="k">return</span> <span class="n">out</span>
+</pre></div>
+</div>
+</div>
+<ul class="simple">
+<li><p><cite>get_blocks_fn</cite>: Function that returns the list individual blocks of the model.</p></li>
+</ul>
+<div class="literal-block-wrapper docutils container" id="id26">
+<div class="code-block-caption"><span class="caption-text"><cite>brevitas_examples/llm/llm_quant/learned_round_utils.py</cite></span><a class="headerlink" href="#id26" title="Permalink to this code">#</a></div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span> <span class="k">def</span><span class="w"> </span><span class="nf">get_blocks</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span> <span class="n">block_name_attribute</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">]:</span>
+     <span class="k">return</span> <span class="n">recurse_getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">block_name_attribute</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>For the LLM entrypoint, these parameters are specified in <cite>brevitas_examples/llm/llm_quant/learned_round_utils.py</cite>,
+while for the Imagenet entrypoint, these can be found at <cite>brevitas_examples/imagenet_classification/ptq/learned_round_utils.py</cite>.</p>
+<p>—</p>
+</section>
+<section id="results">
+<h1>### Results<a class="headerlink" href="#results" title="Permalink to this heading">#</a></h1>
+<p>To demonstrate the effectivenes and flexibility of the Learned Round implementation in Brevitas,
+its performance was compared against the Sign Round <a class="footnote-reference brackets" href="#id14" id="id9" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a> for weight-only quantization,
+and against GPTQ and Qronos for the rest of scenarios.</p>
+<p>In comparison with Sign Round <a class="footnote-reference brackets" href="#id14" id="id10" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a>, Signed SGD was also used in these experiments,
+but the number of iterations and the learning rate were decoupled, thus requiring the clipping operation in <cite>LearnedRoundIdentity</cite>.
+Moreover, the SGD optimizer was used for learning the scales, and these are parametrized directly, instead of learning the weight clipping,
+while in Sign Round <a class="footnote-reference brackets" href="#id14" id="id11" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a> the authors use Sign SGD to learn the weight clipping, in the same fashion as OmniQuant <a class="footnote-reference brackets" href="#id18" id="id12" role="doc-noteref"><span class="fn-bracket">[</span>6<span class="fn-bracket">]</span></a>.</p>
+<p>Experiments were conducted on <strong>Llama 3.2</strong> and <strong>Qwen 2.5</strong> base models, sourced from <strong>Huggingface</strong>, using <strong>WikiText2</strong> for validation.
+To assess generalization, <strong>LightEval</strong> was used across five zero-shot reasoning tasks, reporting the normalized average accuracy for these:
+- ARC (challenge and easy)
+- HellaSwag
+- PIQA
+- Winogrande</p>
+<p>#### Weight-only quantization of <cite>Llama 3.2</cite> and <cite>Qwen 2.5</cite> foundation models</p>
+<p>The quantization configuration used is:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">scaling_min_val</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0001</span>
+<span class="nt">weight_bit_width</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="nt">weight_group_dim</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="nt">weight_group_size</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">128</span>
+<span class="nt">weight_param_method</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stats</span>
+<span class="nt">weight_quant_format</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">int</span>
+<span class="nt">weight_quant_granularity</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">per_channel</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">per_group</span>
+<span class="nt">weight_quant_type</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sym</span>
+<span class="nt">weight_scale_precision</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">float_scale</span>
+</pre></div>
+</div>
+<p>The results for <cite>Llama 3.2</cite> are summarized in the following table:
++————+———–+——————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+
+|                                           |                                     <strong>w2g128</strong>                                 |                                       <strong>w4</strong>                                   |                                     <strong>w4g128</strong>                                 |
++————+———–+——————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+
+|                                           |               wikitext2 ↓               |               0-shot ↑               |               wikitext2 ↓               |               0-shot ↑               |               wikitext2 ↓               |               0-shot ↑               |
++————+———–+——————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+
+| model      | stage 1   | stage 2          |  1b         |  3b         |  8b         |   1b       |   3b       |   8b       |  1b         |  3b         |  8b         |   1b       |   3b       |   8b       |  1b         |  3b         |  8b         |   1b       |   3b       |   8b       |
++————+———–+——————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+
+| Llama-3.2  | BF16      |                  |  8.9        |  7.2        |  5.9        | 56.2       | 63.6       | 69.1       |  8.9        |  7.2        |  5.9        | 56.2       | 63.6       | 69.1       |  8.9        |  7.2        |  5.9        | 56.2       | 63.6       | 69.1       |
++            +———–+——————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+
+|            | -         | RTN              | 92672.00    | 11776.00    | 38656.00    | 35.06      | 35.54      | 35.57      | 23.12       | 9.81        | 7.88        | 48.50      | 58.72      | 65.23      | 11.06       | 7.75        | 6.38        | 52.83      | 61.57      | 68.31      |
++            +           +——————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+
+|            |           | GPTQ             | 179.00      | 33.00       | 25.38       | 36.78      | 41.08      | 43.60      | 11.06       | 8.12        | 6.78        | 53.40      | 61.48      | 66.52      | 9.81        | 7.50        | 6.22        | 54.93      | 62.49      | 68.27      |
++            +           +——————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+
+|            |           | Qronos           | 60.00       | 21.00       | 16.12       | 38.84      | 45.68      | 50.20      | 10.75       | 7.88        | 6.62        | 53.83      | 62.00      | 67.18      | 9.62        | <strong>7.38</strong>    | 6.19        | 55.23      | 62.82      | 68.31      |
++            +           +——————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+
+|            |           | Learned Round    | 41.67       | 18.18       | 14.13       | 43.66      | 48.76      | <strong>55.47</strong>  | 10.44       | 8.11        | 6.48        | 54.12      | 62.62      | 67.09      | 9.57        | 7.44        | 6.12        | 55.23      | 63.08      | 68.20      |
++            +———–+——————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+
+|            | HIP       | RTN              | 143360.00   | 16128.00    | 4928.00     | 34.79      | 35.06      | 35.40      | 12.94       | 9.06        | 7.09        | 50.85      | 59.54      | 66.64      | 10.94       | 8.00        | 6.47        | 53.50      | 61.72      | 67.91      |
++            +           +——————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+
+|            |           | GPTQ             | 131.00      | 27.00       | 18.62       | 37.35      | 43.10      | 48.70      | 10.25       | 7.75        | 6.47        | 54.27      | 62.37      | 67.00      | 9.62        | 7.50        | 6.19        | 55.22      | 63.15      | 68.16      |
++            +           +——————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+
+|            |           | Qronos           | 77.00       | 35.25       | 20.75       | 38.38      | 41.31      | 46.14      | 10.56       | 8.12        | 6.62        | 52.94      | 61.49      | 66.53      | 9.94        | 7.62        | 6.28        | 55.02      | 62.89      | 68.35      |
++            +           +——————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+
+|            |           | Learned Round    | <strong>32.53</strong>   | <strong>17.64</strong>   | <strong>13.09</strong>   | <strong>43.97</strong>  | <strong>50.57</strong>  | 36.05      | <strong>9.74</strong>    | <strong>7.65</strong>    | <strong>6.31</strong>    | <strong>55.37</strong>  | <strong>62.82</strong>  | <strong>67.98</strong>  | <strong>9.40</strong>    | 7.42        | <strong>6.09</strong>    | <strong>55.97</strong>  | <strong>63.29</strong>  | <strong>68.58</strong>  |
++            +———–+——————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+
+|            | MagR      | RTN              | 20736.00    | 16128.00    | 5568.00     | 35.81      | 35.44      | 35.57      | 13.19       | 9.06        | 7.09        | 50.84      | 54.51      | 65.12      | 12.19       | 8.50        | 6.78        | 51.84      | 56.34      | 65.08      |
++            +           +——————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+
+|            |           | GPTQ             | 96.00       | 34.25       | 25.38       | 37.10      | 38.90      | 42.68      | 11.25       | 8.38        | 6.69        | 53.35      | 57.26      | 66.64      | 10.75       | 8.12        | 6.53        | 53.67      | 58.81      | 66.80      |
++            +           +——————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+
+|            |           | Qronos           | 43.75       | 21.75       | 18.25       | 40.23      | 45.90      | 51.31      | 10.56       | 7.75        | 6.41        | 54.39      | 61.61      | 67.44      | 10.25       | 7.62        | 6.28        | 54.83      | 61.50      | 67.85      |
++            +           +——————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+
+|            |           | Learned Round    | 34.16       | 17.98       |             | 43.83      | 49.63      |            | 10.07       | 8.11        |             | 52.58      | 46.94      |            | 9.89        | 7.91        |             | 54.31      | 56.37      |            |
++————+———–+——————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+————-+————-+————-+————+————+————+</p>
+<p>The results for <cite>Qwen 2.5</cite> are summarized in the following table:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<tbody>
+<tr class="row-odd"><td colspan="3"></td>
+<td colspan="6"><p><strong>W2g128</strong></p></td>
+<td colspan="6"><p><strong>W4</strong></p></td>
+<td colspan="6"><p><strong>W4g128</strong></p></td>
+</tr>
+<tr class="row-even"><td colspan="3"></td>
+<td colspan="3"><p>WikiText2 ↓</p></td>
+<td colspan="3"><p>0-shot ↑</p></td>
+<td colspan="3"><p>WikiText2 ↓</p></td>
+<td colspan="3"><p>0-shot ↑</p></td>
+<td colspan="3"><p>WikiText2 ↓</p></td>
+<td colspan="3"><p>0-shot ↑</p></td>
+</tr>
+<tr class="row-odd"><td><p>Model</p></td>
+<td><p>Stage 1</p></td>
+<td><p>Stage 2</p></td>
+<td><p>1.5B</p></td>
+<td><p>3B</p></td>
+<td><p>7B</p></td>
+<td><p>1.5B</p></td>
+<td><p>3B</p></td>
+<td><p>7B</p></td>
+<td><p>1.5B</p></td>
+<td><p>3B</p></td>
+<td><p>7B</p></td>
+<td><p>1.5B</p></td>
+<td><p>3B</p></td>
+<td><p>7B</p></td>
+<td><p>1.5B</p></td>
+<td><p>3B</p></td>
+<td><p>7B</p></td>
+<td><p>1.5B</p></td>
+<td><p>3B</p></td>
+<td><p>7B</p></td>
+</tr>
+<tr class="row-even"><td rowspan="13"><p>Qwen 2.5</p></td>
+<td><p>BF16</p></td>
+<td></td>
+<td><p>8.5</p></td>
+<td><p>7.4</p></td>
+<td><p>6.5</p></td>
+<td><p>60.7</p></td>
+<td><p>64.3</p></td>
+<td><p>67.2</p></td>
+<td><p>8.5</p></td>
+<td><p>7.4</p></td>
+<td><p>6.5</p></td>
+<td><p>60.7</p></td>
+<td><p>64.3</p></td>
+<td><p>67.2</p></td>
+<td><p>8.5</p></td>
+<td><p>7.4</p></td>
+<td><p>6.5</p></td>
+<td><p>60.7</p></td>
+<td><p>64.3</p></td>
+<td><p>67.2</p></td>
+</tr>
+<tr class="row-odd"><td rowspan="4"><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><p>RTN</p></td>
+<td><p>152576.00</p></td>
+<td><p>76800.00</p></td>
+<td><p>19456.00</p></td>
+<td><p>35.33</p></td>
+<td><p>34.90</p></td>
+<td><p>35.53</p></td>
+<td><p>12.75</p></td>
+<td><p>6304.00</p></td>
+<td><p>8.50</p></td>
+<td><p>54.52</p></td>
+<td><p>35.56</p></td>
+<td><p>61.49</p></td>
+<td><p>9.50</p></td>
+<td><p>9.06</p></td>
+<td><p>6.78</p></td>
+<td><p>58.47</p></td>
+<td><p>61.37</p></td>
+<td><p>65.61</p></td>
+</tr>
+<tr class="row-even"><td><p>GPTQ</p></td>
+<td><p>38.00</p></td>
+<td><p>23.12</p></td>
+<td><p>12.56</p></td>
+<td><p>39.46</p></td>
+<td><p>41.43</p></td>
+<td><p>52.07</p></td>
+<td><p>9.81</p></td>
+<td><p>8.38</p></td>
+<td><p>7.09</p></td>
+<td><p>56.59</p></td>
+<td><p>62.24</p></td>
+<td><p>64.16</p></td>
+<td><p>8.94</p></td>
+<td><p>7.75</p></td>
+<td><p>6.69</p></td>
+<td><p>59.38</p></td>
+<td><p>62.85</p></td>
+<td><p>66.36</p></td>
+</tr>
+<tr class="row-odd"><td><p>Qronos</p></td>
+<td><p>27.50</p></td>
+<td><p>18.62</p></td>
+<td><p>12.19</p></td>
+<td><p>42.57</p></td>
+<td><p>46.41</p></td>
+<td><p>55.23</p></td>
+<td><p>9.50</p></td>
+<td><p>8.25</p></td>
+<td><p>7.06</p></td>
+<td><p>56.42</p></td>
+<td><p>62.41</p></td>
+<td><p>65.33</p></td>
+<td><p>8.94</p></td>
+<td><p>7.75</p></td>
+<td><p>6.69</p></td>
+<td><p>60.14</p></td>
+<td><p>62.47</p></td>
+<td><p>66.75</p></td>
+</tr>
+<tr class="row-even"><td><p>Learned Round</p></td>
+<td><p>23.70</p></td>
+<td><p>16.93</p></td>
+<td><p>12.09</p></td>
+<td><p>45.96</p></td>
+<td><p>51.00</p></td>
+<td><p><strong>57.73</strong></p></td>
+<td><p>9.85</p></td>
+<td><p>8.10</p></td>
+<td><p>10.04</p></td>
+<td><p>59.28</p></td>
+<td><p>63.27</p></td>
+<td><p>65.34</p></td>
+<td><p>8.86</p></td>
+<td><p>7.73</p></td>
+<td><p>6.68</p></td>
+<td><p>59.73</p></td>
+<td><p><strong>64.22</strong></p></td>
+<td><p>66.84</p></td>
+</tr>
+<tr class="row-odd"><td rowspan="4"><p>HIP</p></td>
+<td><p>RTN</p></td>
+<td><p>14208.00</p></td>
+<td><p>95420416.00</p></td>
+<td><p>536.00</p></td>
+<td><p>34.83</p></td>
+<td><p>35.06</p></td>
+<td><p>37.65</p></td>
+<td><p>9.94</p></td>
+<td><p>11.81</p></td>
+<td><p>8.00</p></td>
+<td><p>56.84</p></td>
+<td><p>59.66</p></td>
+<td><p>62.94</p></td>
+<td><p>9.31</p></td>
+<td><p>8.25</p></td>
+<td><p>6.78</p></td>
+<td><p>59.73</p></td>
+<td><p>62.51</p></td>
+<td><p>65.94</p></td>
+</tr>
+<tr class="row-even"><td><p>GPTQ</p></td>
+<td><p>23.12</p></td>
+<td><p>15.88</p></td>
+<td><p>10.94</p></td>
+<td><p>43.71</p></td>
+<td><p>45.93</p></td>
+<td><p>52.79</p></td>
+<td><p><strong>9.06</strong></p></td>
+<td><p><strong>7.88</strong></p></td>
+<td><p><strong>6.94</strong></p></td>
+<td><p><strong>59.81</strong></p></td>
+<td><p>63.56</p></td>
+<td><p>65.70</p></td>
+<td><p>8.75</p></td>
+<td><p><strong>7.62</strong></p></td>
+<td><p><strong>6.62</strong></p></td>
+<td><p>59.66</p></td>
+<td><p>63.73</p></td>
+<td><p>66.48</p></td>
+</tr>
+<tr class="row-odd"><td><p>Qronos</p></td>
+<td><p>20.38</p></td>
+<td><p>15.19</p></td>
+<td><p><strong>10.75</strong></p></td>
+<td><p>45.99</p></td>
+<td><p>47.02</p></td>
+<td><p>55.92</p></td>
+<td><p><strong>9.06</strong></p></td>
+<td><p><strong>7.88</strong></p></td>
+<td><p><strong>6.94</strong></p></td>
+<td><p>58.69</p></td>
+<td><p>62.78</p></td>
+<td><p><strong>66.19</strong></p></td>
+<td><p>8.75</p></td>
+<td><p>7.75</p></td>
+<td><p><strong>6.62</strong></p></td>
+<td><p><strong>60.29</strong></p></td>
+<td><p>63.16</p></td>
+<td><p><strong>66.87</strong></p></td>
+</tr>
+<tr class="row-even"><td><p>Learned Round</p></td>
+<td><p><strong>18.72</strong></p></td>
+<td><p><strong>13.48</strong></p></td>
+<td><p>11.49</p></td>
+<td><p>46.55</p></td>
+<td><p><strong>52.08</strong></p></td>
+<td><p>57.49</p></td>
+<td><p>11.84</p></td>
+<td><p>7.99</p></td>
+<td><p>7.46</p></td>
+<td><p>52.57</p></td>
+<td><p><strong>64.18</strong></p></td>
+<td><p>65.72</p></td>
+<td><p><strong>8.74</strong></p></td>
+<td><p>7.63</p></td>
+<td><p>6.69</p></td>
+<td><p>59.93</p></td>
+<td><p>64.06</p></td>
+<td><p>66.42</p></td>
+</tr>
+<tr class="row-odd"><td rowspan="4"><p>MagR</p></td>
+<td><p>RTN</p></td>
+<td><p>56320.00</p></td>
+<td><p>68096.00</p></td>
+<td><p>1696.00</p></td>
+<td><p>35.55</p></td>
+<td><p>35.15</p></td>
+<td><p>36.15</p></td>
+<td><p>10.56</p></td>
+<td><p>9.06</p></td>
+<td><p>7.50</p></td>
+<td><p>55.31</p></td>
+<td><p>59.89</p></td>
+<td><p>64.93</p></td>
+<td><p>10.12</p></td>
+<td><p>8.62</p></td>
+<td><p>7.28</p></td>
+<td><p>56.66</p></td>
+<td><p>61.02</p></td>
+<td><p>66.33</p></td>
+</tr>
+<tr class="row-even"><td><p>GPTQ</p></td>
+<td><p>43.75</p></td>
+<td><p>40.00</p></td>
+<td><p>13.81</p></td>
+<td><p>40.42</p></td>
+<td><p>42.54</p></td>
+<td><p>51.59</p></td>
+<td><p>9.94</p></td>
+<td><p>8.38</p></td>
+<td><p>7.34</p></td>
+<td><p>58.19</p></td>
+<td><p>62.56</p></td>
+<td><p>65.39</p></td>
+<td><p>9.62</p></td>
+<td><p>8.25</p></td>
+<td><p>7.16</p></td>
+<td><p>58.04</p></td>
+<td><p>61.89</p></td>
+<td><p>66.12</p></td>
+</tr>
+<tr class="row-odd"><td><p>Qronos</p></td>
+<td><p>34.25</p></td>
+<td><p>19.75</p></td>
+<td><p>13.81</p></td>
+<td><p>41.37</p></td>
+<td><p>46.71</p></td>
+<td><p>54.87</p></td>
+<td><p>9.81</p></td>
+<td><p>8.38</p></td>
+<td><p>7.28</p></td>
+<td><p>57.71</p></td>
+<td><p>61.56</p></td>
+<td><p>65.65</p></td>
+<td><p>9.50</p></td>
+<td><p>8.00</p></td>
+<td><p>7.16</p></td>
+<td><p>57.90</p></td>
+<td><p>61.51</p></td>
+<td><p>66.38</p></td>
+</tr>
+<tr class="row-even"><td><p>Learned Round</p></td>
+<td><p>22.49</p></td>
+<td><p>15.79</p></td>
+<td></td>
+<td><p><strong>46.83</strong></p></td>
+<td><p>48.03</p></td>
+<td></td>
+<td><p>10.14</p></td>
+<td><p>8.08</p></td>
+<td></td>
+<td><p>58.21</p></td>
+<td><p>63.07</p></td>
+<td></td>
+<td><p>9.03</p></td>
+<td><p>7.80</p></td>
+<td></td>
+<td><p>59.14</p></td>
+<td><p>63.44</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>#### Weight and activation quantization of Llama 3.2 foundation models</p>
+<p>The quantization configuration used is:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">scaling_min_val</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0001</span>
+<span class="nt">weight_bit_width</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="nt">weight_group_dim</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="nt">weight_group_size</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="nt">weight_param_method</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stats</span>
+<span class="nt">weight_quant_format</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">int</span>
+<span class="nt">weight_quant_granularity</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">per_channel</span>
+<span class="nt">weight_quant_type</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sym</span>
+<span class="nt">weight_scale_precision</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">float_scale</span>
+<span class="nt">input_bit_width</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="nt">input_group_size</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span>
+<span class="nt">input_param_method</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stats</span>
+<span class="nt">input_quant_format</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">int</span>
+<span class="nt">input_quant_granularity</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">per_row</span>
+<span class="nt">input_quant_type</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">asym</span>
+<span class="nt">input_scale_precision</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">float_scale</span>
+<span class="nt">input_scale_type</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dynamic</span>
+</pre></div>
+</div>
+<p>The results for <cite>Llama 3.2</cite> are summarized in the following table:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<tbody>
+<tr class="row-odd"><td colspan="3"></td>
+<td colspan="6"><p><strong>W4A4</strong></p></td>
+</tr>
+<tr class="row-even"><td colspan="3"></td>
+<td colspan="3"><p>WikiText2 ↓</p></td>
+<td colspan="3"><p>0-shot ↑</p></td>
+</tr>
+<tr class="row-odd"><td><p>Model</p></td>
+<td><p>Stage 1</p></td>
+<td><p>Stage 2</p></td>
+<td><p>1B</p></td>
+<td><p>3B</p></td>
+<td><p>8B</p></td>
+<td><p>1B</p></td>
+<td><p>3B</p></td>
+<td><p>8B</p></td>
+</tr>
+<tr class="row-even"><td rowspan="21"><p>Llama-3.2</p></td>
+<td><p>BF16</p></td>
+<td></td>
+<td><p>8.9</p></td>
+<td><p>7.2</p></td>
+<td><p>5.9</p></td>
+<td><p>56.2</p></td>
+<td><p>63.6</p></td>
+<td><p>69.1</p></td>
+</tr>
+<tr class="row-odd"><td rowspan="4"><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><p>RTN</p></td>
+<td><p>6304.00</p></td>
+<td><p>22016.00</p></td>
+<td><p>52736.00</p></td>
+<td><p>34.59</p></td>
+<td><p>34.83</p></td>
+<td><p>35.60</p></td>
+</tr>
+<tr class="row-even"><td><p>GPTQ</p></td>
+<td><p>23424.00</p></td>
+<td><p>14208.00</p></td>
+<td><p>23424.00</p></td>
+<td><p>34.38</p></td>
+<td><p>35.48</p></td>
+<td><p>34.32</p></td>
+</tr>
+<tr class="row-odd"><td><p>Qronos</p></td>
+<td><p>174.00</p></td>
+<td><p>84.50</p></td>
+<td><p>82.00</p></td>
+<td><p>37.44</p></td>
+<td><p>38.59</p></td>
+<td><p>38.65</p></td>
+</tr>
+<tr class="row-even"><td><p>Learned Round</p></td>
+<td><p>100.67</p></td>
+<td><p>73.80</p></td>
+<td><p>274.88</p></td>
+<td><p>36.10</p></td>
+<td><p>39.03</p></td>
+<td><p>38.15</p></td>
+</tr>
+<tr class="row-odd"><td rowspan="4"><p>HIP</p></td>
+<td><p>RTN</p></td>
+<td><p>18.25</p></td>
+<td><p>10.56</p></td>
+<td><p>8.38</p></td>
+<td><p>45.78</p></td>
+<td><p>55.25</p></td>
+<td><p>61.33</p></td>
+</tr>
+<tr class="row-even"><td><p>GPTQ</p></td>
+<td><p>13.19</p></td>
+<td><p><strong>8.75</strong></p></td>
+<td><p>7.50</p></td>
+<td><p>48.49</p></td>
+<td><p>58.35</p></td>
+<td><p>62.76</p></td>
+</tr>
+<tr class="row-odd"><td><p>Qronos</p></td>
+<td><p>13.19</p></td>
+<td><p>9.19</p></td>
+<td><p>7.62</p></td>
+<td><p>48.40</p></td>
+<td><p>58.24</p></td>
+<td><p>62.85</p></td>
+</tr>
+<tr class="row-even"><td><p>Learned Round</p></td>
+<td><p><strong>12.32</strong></p></td>
+<td><p>8.78</p></td>
+<td><p><strong>7.23</strong></p></td>
+<td><p><strong>50.57</strong></p></td>
+<td><p><strong>59.09</strong></p></td>
+<td><p><strong>63.70</strong></p></td>
+</tr>
+<tr class="row-odd"><td rowspan="4"><p>MagR</p></td>
+<td><p>RTN</p></td>
+<td><p>5920.00</p></td>
+<td><p>8096.00</p></td>
+<td><p>24960.00</p></td>
+<td><p>34.94</p></td>
+<td><p>35.03</p></td>
+<td><p>34.75</p></td>
+</tr>
+<tr class="row-even"><td><p>GPTQ</p></td>
+<td><p>12544.00</p></td>
+<td><p>17152.00</p></td>
+<td><p>24960.00</p></td>
+<td><p>35.74</p></td>
+<td><p>35.91</p></td>
+<td><p>35.44</p></td>
+</tr>
+<tr class="row-odd"><td><p>Qronos</p></td>
+<td><p>197.00</p></td>
+<td><p>153.00</p></td>
+<td><p>174.00</p></td>
+<td><p>36.74</p></td>
+<td><p>37.65</p></td>
+<td><p>38.05</p></td>
+</tr>
+<tr class="row-even"><td><p>Learned Round</p></td>
+<td><p>103.10</p></td>
+<td><p>82.66</p></td>
+<td></td>
+<td><p>38.74</p></td>
+<td><p>36.75</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td rowspan="4"><p>QuaRot</p></td>
+<td><p>RTN</p></td>
+<td><p>27.88</p></td>
+<td><p>19.12</p></td>
+<td><p>11.62</p></td>
+<td><p>42.25</p></td>
+<td><p>44.93</p></td>
+<td><p>55.34</p></td>
+</tr>
+<tr class="row-even"><td><p>GPTQ</p></td>
+<td><p>14.69</p></td>
+<td><p>10.12</p></td>
+<td><p>8.00</p></td>
+<td><p>47.54</p></td>
+<td><p>55.34</p></td>
+<td><p>61.58</p></td>
+</tr>
+<tr class="row-odd"><td><p>Qronos</p></td>
+<td><p>13.81</p></td>
+<td><p>9.31</p></td>
+<td><p>7.75</p></td>
+<td><p>48.77</p></td>
+<td><p>57.18</p></td>
+<td><p>62.80</p></td>
+</tr>
+<tr class="row-even"><td><p>Learned Round</p></td>
+<td><p>13.65</p></td>
+<td><p>9.88</p></td>
+<td><p>7.86</p></td>
+<td><p>49.26</p></td>
+<td><p>55.22</p></td>
+<td><p>44.84</p></td>
+</tr>
+<tr class="row-odd"><td rowspan="4"><p>SpinQuant</p></td>
+<td><p>RTN</p></td>
+<td><p>18.25</p></td>
+<td><p>87.00</p></td>
+<td><p>77.00</p></td>
+<td><p>46.57</p></td>
+<td><p>35.06</p></td>
+<td><p>36.15</p></td>
+</tr>
+<tr class="row-even"><td><p>GPTQ</p></td>
+<td><p>15.38</p></td>
+<td><p>1240.00</p></td>
+<td><p>392.00</p></td>
+<td><p>47.50</p></td>
+<td><p>34.58</p></td>
+<td><p>34.67</p></td>
+</tr>
+<tr class="row-odd"><td><p>Qronos</p></td>
+<td><p>14.69</p></td>
+<td><p>368.00</p></td>
+<td><p>286.00</p></td>
+<td><p>47.81</p></td>
+<td><p>34.68</p></td>
+<td><p>35.27</p></td>
+</tr>
+<tr class="row-even"><td><p>Learned Round</p></td>
+<td><p>13.52</p></td>
+<td><p>9.41</p></td>
+<td><p>7.59</p></td>
+<td><p>50.22</p></td>
+<td><p>57.08</p></td>
+<td><p>62.22</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>#### MXFP4 weight and activation quantization of Llama 3.2 foundation models</p>
+<p>The quantization configuration used is:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">scaling_min_val</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0001</span>
+<span class="nt">weight_bit_width</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="nt">weight_group_dim</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="nt">weight_group_size</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span>
+<span class="nt">weight_param_method</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stats</span>
+<span class="nt">weight_quant_format</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">float_ocp_e2m1</span>
+<span class="nt">weight_quant_granularity</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">per_group</span>
+<span class="nt">weight_quant_type</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sym</span>
+<span class="nt">weight_scale_precision</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">po2_scale</span>
+<span class="nt">scale_rounding_func_type</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">floor</span>
+
+<span class="nt">input_bit_width</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
+<span class="nt">input_group_size</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span>
+<span class="nt">input_param_method</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">stats</span>
+<span class="nt">input_quant_format</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">float_ocp_e2m1</span>
+<span class="nt">input_quant_granularity</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">per_group</span>
+<span class="nt">input_quant_type</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sym</span>
+<span class="nt">input_scale_precision</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">po2_scale</span>
+<span class="nt">input_scale_type</span><span class="p">:</span>
+<span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dynamic</span>
+</pre></div>
+</div>
+<p>The results for <cite>Llama 3.2</cite> are summarized in the following table:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<tbody>
+<tr class="row-odd"><td colspan="3"></td>
+<td colspan="6"><p><strong>W4g32A</strong></p></td>
+</tr>
+<tr class="row-even"><td colspan="3"></td>
+<td colspan="3"><p>WikiText2 ↓</p></td>
+<td colspan="3"><p>0-shot ↑</p></td>
+</tr>
+<tr class="row-odd"><td><p>Model</p></td>
+<td><p>Stage 1</p></td>
+<td><p>Stage 2</p></td>
+<td><p>1B</p></td>
+<td><p>3B</p></td>
+<td><p>8B</p></td>
+<td><p>1B</p></td>
+<td><p>3B</p></td>
+<td><p>8B</p></td>
+</tr>
+<tr class="row-even"><td rowspan="21"><p>Llama-3.2</p></td>
+<td><p>BF16</p></td>
+<td></td>
+<td><p>8.9</p></td>
+<td><p>7.2</p></td>
+<td><p>5.9</p></td>
+<td><p>56.2</p></td>
+<td><p>63.6</p></td>
+<td><p>69.1</p></td>
+</tr>
+<tr class="row-odd"><td rowspan="4"><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><p>RTN</p></td>
+<td><p>14.44</p></td>
+<td><p>9.19</p></td>
+<td><p>7.75</p></td>
+<td><p>50.15</p></td>
+<td><p>57.39</p></td>
+<td><p>63.45</p></td>
+</tr>
+<tr class="row-even"><td><p>GPTQ</p></td>
+<td><p>12.38</p></td>
+<td><p>8.62</p></td>
+<td><p>7.16</p></td>
+<td><p>51.80</p></td>
+<td><p>56.95</p></td>
+<td><p>64.68</p></td>
+</tr>
+<tr class="row-odd"><td><p>Qronos</p></td>
+<td><p>12.56</p></td>
+<td><p>8.75</p></td>
+<td><p>7.22</p></td>
+<td><p>51.57</p></td>
+<td><p>59.14</p></td>
+<td><p>64.09</p></td>
+</tr>
+<tr class="row-even"><td><p>Learned Round</p></td>
+<td><p>11.78</p></td>
+<td><p>8.49</p></td>
+<td><p>6.97</p></td>
+<td><p>52.78</p></td>
+<td><p>61.01</p></td>
+<td><p>65.21</p></td>
+</tr>
+<tr class="row-odd"><td rowspan="4"><p>HIP</p></td>
+<td><p>RTN</p></td>
+<td><p>13.19</p></td>
+<td><p>8.94</p></td>
+<td><p>7.28</p></td>
+<td><p>50.42</p></td>
+<td><p>59.21</p></td>
+<td><p>65.99</p></td>
+</tr>
+<tr class="row-even"><td><p>GPTQ</p></td>
+<td><p>11.06</p></td>
+<td><p><strong>8.25</strong></p></td>
+<td><p>6.78</p></td>
+<td><p>52.49</p></td>
+<td><p>60.98</p></td>
+<td><p>65.94</p></td>
+</tr>
+<tr class="row-odd"><td><p>Qronos</p></td>
+<td><p>11.62</p></td>
+<td><p>8.50</p></td>
+<td><p>7.06</p></td>
+<td><p>51.58</p></td>
+<td><p>59.72</p></td>
+<td><p>65.54</p></td>
+</tr>
+<tr class="row-even"><td><p>Learned Round</p></td>
+<td><p><strong>11.01</strong></p></td>
+<td><p>8.38</p></td>
+<td><p><strong>6.70</strong></p></td>
+<td><p><strong>53.05</strong></p></td>
+<td><p><strong>61.11</strong></p></td>
+<td><p>65.64</p></td>
+</tr>
+<tr class="row-odd"><td rowspan="4"><p>MagR</p></td>
+<td><p>RTN</p></td>
+<td><p>18.88</p></td>
+<td><p>12.00</p></td>
+<td><p>8.94</p></td>
+<td><p>46.03</p></td>
+<td><p>48.84</p></td>
+<td><p>57.59</p></td>
+</tr>
+<tr class="row-even"><td><p>GPTQ</p></td>
+<td><p>14.44</p></td>
+<td><p>9.94</p></td>
+<td><p>7.88</p></td>
+<td><p>49.36</p></td>
+<td><p>53.12</p></td>
+<td><p>62.19</p></td>
+</tr>
+<tr class="row-odd"><td><p>Qronos</p></td>
+<td><p>13.19</p></td>
+<td><p>8.94</p></td>
+<td><p>7.50</p></td>
+<td><p>51.28</p></td>
+<td><p>58.27</p></td>
+<td><p>63.86</p></td>
+</tr>
+<tr class="row-even"><td><p>Learned Round</p></td>
+<td><p>12.48</p></td>
+<td><p>9.50</p></td>
+<td></td>
+<td><p>50.86</p></td>
+<td><p>59.18</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td rowspan="4"><p>QuaRot</p></td>
+<td><p>RTN</p></td>
+<td><p>15.62</p></td>
+<td><p>12.38</p></td>
+<td><p>8.50</p></td>
+<td><p>48.36</p></td>
+<td><p>54.34</p></td>
+<td><p>62.64</p></td>
+</tr>
+<tr class="row-even"><td><p>GPTQ</p></td>
+<td><p>12.19</p></td>
+<td><p>9.06</p></td>
+<td><p>7.38</p></td>
+<td><p>51.10</p></td>
+<td><p>58.52</p></td>
+<td><p>64.59</p></td>
+</tr>
+<tr class="row-odd"><td><p>Qronos</p></td>
+<td><p>11.81</p></td>
+<td><p>8.62</p></td>
+<td><p>7.00</p></td>
+<td><p>51.71</p></td>
+<td><p>59.06</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>Learned Round</p></td>
+<td><p>11.69</p></td>
+<td><p>8.40</p></td>
+<td><p>6.86</p></td>
+<td><p>52.35</p></td>
+<td><p>60.26</p></td>
+<td><p>41.28</p></td>
+</tr>
+<tr class="row-odd"><td rowspan="4"><p>SpinQuant</p></td>
+<td><p>RTN</p></td>
+<td><p>12.00</p></td>
+<td><p>8.75</p></td>
+<td><p>7.16</p></td>
+<td><p>51.92</p></td>
+<td><p>59.35</p></td>
+<td><p><strong>66.01</strong></p></td>
+</tr>
+<tr class="row-even"><td><p>GPTQ</p></td>
+<td><p>12.38</p></td>
+<td><p>9.62</p></td>
+<td><p>8.12</p></td>
+<td><p>51.06</p></td>
+<td><p>58.37</p></td>
+<td><p>62.93</p></td>
+</tr>
+<tr class="row-odd"><td><p>Qronos</p></td>
+<td><p>11.62</p></td>
+<td><p>8.62</p></td>
+<td><p>7.22</p></td>
+<td><p>51.50</p></td>
+<td><p>59.26</p></td>
+<td><p>64.49</p></td>
+</tr>
+<tr class="row-even"><td><p>Learned Round</p></td>
+<td><p>11.71</p></td>
+<td><p>8.51</p></td>
+<td><p>6.93</p></td>
+<td><p>52.52</p></td>
+<td><p>59.79</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="rubric">References</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id13" role="note">
+<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id1">1</a>,<a role="doc-backlink" href="#id3">2</a>)</span>
+<p>Nagel, M., Amjad, R. A., Van Baalen, M., Louizos, C., &amp; Blankevoort, T. (2020, November). Up or down? adaptive rounding for post-training quantization. In International conference on machine learning (pp. 7197-7206). PMLR.</p>
+</aside>
+<aside class="footnote brackets" id="id14" role="note">
+<span class="label"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id2">1</a>,<a role="doc-backlink" href="#id4">2</a>,<a role="doc-backlink" href="#id8">3</a>,<a role="doc-backlink" href="#id9">4</a>,<a role="doc-backlink" href="#id10">5</a>,<a role="doc-backlink" href="#id11">6</a>)</span>
+<p>Cheng, W., Zhang, W., Shen, H., Cai, Y., He, X., Kaokao, L., &amp; Liu, Y. (2024, November). Optimize weight rounding via signed gradient descent for the quantization of llms. In Findings of the Association for Computational Linguistics: EMNLP 2024 (pp. 11332-11350).</p>
+</aside>
+<aside class="footnote brackets" id="id15" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id5">3</a><span class="fn-bracket">]</span></span>
+<p>Ashkboos, S., Mohtashami, A., Croci, M. L., Li, B., Cameron, P., Jaggi, M., … &amp; Hensman, J. (2024). Quarot: Outlier-free 4-bit inference in rotated llms. Advances in Neural Information Processing Systems, 37, 100213-100240.</p>
+</aside>
+<aside class="footnote brackets" id="id16" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id6">4</a><span class="fn-bracket">]</span></span>
+<p>Liu, Z., Zhao, C., Fedorov, I., Soran, B., Choudhary, D., Krishnamoorthi, R., … &amp; Blankevoort, T. (2024). Spinquant: Llm quantization with learned rotations. arXiv preprint arXiv:2405.16406.</p>
+</aside>
+<aside class="footnote brackets" id="id17" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id7">5</a><span class="fn-bracket">]</span></span>
+<p>Zhang, A., Wang, N., Deng, Y., Li, X., Yang, Z., &amp; Yin, P. (2024). Magr: Weight magnitude reduction for enhancing post-training quantization. Advances in neural information processing systems, 37, 85109-85130.</p>
+</aside>
+<aside class="footnote brackets" id="id18" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id12">6</a><span class="fn-bracket">]</span></span>
+<p>Shao, W., Chen, M., Zhang, Z., Xu, P., Zhao, L., Li, Z., … &amp; Luo, P. (2023). Omniquant: Omnidirectionally calibrated quantization for large language models. arXiv preprint arXiv:2308.13137.</p>
+</aside>
+</aside>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="export_shark.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Shark-AI Export</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../settings.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Settings</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">## Learned Round</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#learned-round-in-brevitas">### Learned Round in Brevitas</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#deep-dive-in-learned-round">### Deep Dive in Learned Round</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#results">### Results</a></li>
+</ul>
+
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../_sources/user_guide/learned_round.rst.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=3ee479438cf8b5e0d341"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=3ee479438cf8b5e0d341"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2025 - Advanced Micro Devices, Inc..
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.3.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<script>
+document.write(`
+  <div class="version-switcher__container dropdown">
+    <button id="pst-version-switcher-button-2"
+      type="button"
+      class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle"
+      data-bs-toggle="dropdown"
+      aria-haspopup="listbox"
+      aria-controls="pst-version-switcher-list-2"
+      aria-label="Version switcher list"
+    >
+      Choose version  <!-- this text may get changed later by javascript -->
+      <span class="caret"></span>
+    </button>
+    <div id="pst-version-switcher-list-2"
+      class="version-switcher__menu dropdown-menu list-group-flush py-0"
+      role="listbox" aria-labelledby="pst-version-switcher-button-2">
+      <!-- dropdown will be populated by javascript on page load -->
+    </div>
+  </div>
+`);
+</script></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
