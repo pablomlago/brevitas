@@ -5,7 +5,7 @@ SPHINXBUILD   ?= sphinx-build
 MULTIVERSION  ?= sphinx-multiversion
 SOURCEDIR     = source
 BUILDDIR      = build
-BUILD_VERSION ?=
+BUILD_VERSION ?= local
 
 export VERSION=$(BUILD_VERSION)
 
@@ -27,4 +27,4 @@ github: html
 	@touch .nojekyll ../docs
 
 livehtml:
-	sphinx-autobuild "$(SOURCEDIR)" "$(BUILDDIR)/livehtml" $(SPHINXOPTS)
+	sphinx-autobuild "$(SOURCEDIR)" "$(BUILDDIR)/livehtml" $(SPHINXOPTS) --port 8001

@@ -206,6 +206,7 @@ while in Sign Round [2]_ the authors use Sign SGD to learn the weight clipping, 
 
 Experiments were conducted on **Llama 3.2** and **Qwen 2.5** base models, sourced from **Huggingface**, using **WikiText2** for validation.
 To assess generalization, **LightEval** was used across five zero-shot reasoning tasks, reporting the normalized average accuracy for these:
+
 - ARC (challenge and easy) 
 - HellaSwag 
 - PIQA 
