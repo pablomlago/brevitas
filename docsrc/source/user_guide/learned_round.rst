@@ -10,15 +10,16 @@ rounding decisions**, instead of relying on fixed round-to-nearest (RTN). It uni
    :local:
    :depth: 3
 
+
 About the Algorithm
 -------------------
 
 Motivation
 ~~~~~~~~~~
 
-Quantization mappings generally **require a rounding operator**, for which **round-to-nearest (RTN)** is the standard choice.
+Quantization mappings generally **require a rounding operator**, for which **round‑to‑nearest (RTN)** is the standard choice.
 
-For example, in symmetric integer quantization the mapping is often written as:
+For example, in symmetric integer quantization the mapping is typically written as:
 
 .. math::
 
@@ -29,81 +30,86 @@ For example, in symmetric integer quantization the mapping is often written as:
     \right) - z
     \right).
 
-RTN is optimal when minimizing **weight reconstruction error**,
+RTN is optimal when minimizing the **weight reconstruction error**
 
 .. math::
 
     \lVert W - \mathcal{Q}(W) \rVert_2,
 
-but this optimality **does not hold when considering the layer output reconstruction loss** (or, depending on the pipeline,
-a block-wise variant), e.g.:
+but this optimality does not generally hold when considering the **layer (or block‑wise) output reconstruction loss**
 
 .. math::
 
     \lVert XW - X\mathcal{Q}(W) \rVert_2,
 
-which is commonly used as a proxy for downstream accuracy degradation during PTQ.
+which is commonly used as a proxy for downstream accuracy degradation in PTQ.
 
-This observation motivates **learned rounding**, where each weight is allowed to round **up or down** in a data-driven way.
+This observation motivates **learned rounding**, where each weight is allowed to round **up or down** in a data‑driven way.
 
 Rounding Optimization
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
 
-Methods such as **AdaRound** [1]_ and **SignRound** [2]_ formulate rounding as a **binary optimization problem**, choosing
-between the floor or ceiling of the quantization grid for each weight. Although the discrete problem is NP-hard, it can be
-relaxed into a **continuous optimization** by introducing learnable parameters inside the rounding operator and optimizing
-them using calibration data.
+Methods such as **AdaRound** [1]_ and **SignRound** [2]_ formulate rounding as a **binary optimization problem**, selecting
+either the floor or the ceiling of the quantization grid for each weight. Although the resulting discrete problem is
+NP‑hard, it can be relaxed into a **continuous optimization** by introducing learnable parameters inside the rounding
+operator and optimizing them using calibration data.
 
-Unlike greedy solvers such as **GPTQ** [3]_ and **Qronos** [4]_, which typically solve closed-form layer-wise objectives
-sequentially, learned rounding methods:
+In contrast to greedy solvers such as **GPTQ** [3]_ and **Qronos** [4]_, which typically solve closed‑form layer‑wise
+objectives sequentially, learned rounding methods:
 
-- jointly optimize rounding decisions (per layer / per block, depending on the pipeline),
-- use gradient-based optimization over calibration data,
+- jointly optimize rounding decisions (per layer or per block),
+- rely on gradient‑based optimization over calibration data,
 - restrict the search space to a limited subset of quantization grid points.
 
-This can improve robustness and reduce overfitting to calibration data, at the cost of additional compute.
+By jointly correcting quantization error across all weights within a block 
+in a constrained manner, this approach more effectively reduces block output error 
+while mitigating overfitting to calibration data. However, compared to **GPTQ** and **Qronos**, 
+learned rounding typically requires greater compute and hyperparameter tuning.
+
 
 Learned Round in Brevitas
 -------------------------
 
-In Brevitas, these techniques are unified under the name **Learned Round**, providing:
+In Brevitas, these approaches are unified under the name **Learned Round**, providing:
 
 - a common abstraction for learned rounding,
-- flexible choices of rounding parametrization and optimization strategy,
+- flexible choices of rounding parameterization and optimization strategy,
 - seamless integration with existing PTQ pipelines (LLM and ImageNet entrypoints).
 
-Learned Round is compatible with **all quantized data types currently available in Brevitas**, including:
+Learned Round is compatible with **all quantized data types currently supported by Brevitas**, including:
 
-- integer quantization (e.g. INT2/INT4/INT8),
-- weight-only, weight-and-activation, and KV-cache quantization,
+- integer quantization (e.g. INT2 / INT4 / INT8),
+- weight‑only, weight‑and‑activation, and KV‑cache quantization,
 - advanced formats such as **MXFP4**.
 
-It is also composable with other PTQ techniques, such as **QuaRot** [5]_, **SpinQuant** [6]_, and **MagR** [7]_.
+It is also composable with other PTQ techniques, including **QuaRot** [5]_, **SpinQuant** [6]_, and **MagR** [7]_.
+
 
 Implementation Overview
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-At a high level, the Learned Round workflow:
+At a high level, Learned Round performs **block‑wise post‑training optimization** of rounding decisions, 
+following these steps:
 
-1. Prepare the model (optional preprocessing, e.g. disable caching).
+1. Prepare the model (optional preprocessing, e.g. disabling internal caches).
 2. Insert learnable rounding parameters into the quantization operators.
 3. Decompose the model into blocks.
 4. For each block:
-   a. Cache block inputs (and reference outputs) using calibration data.
-   d. Optimize rounding parameters via a local reconstruction loss.
+   a. Cache block inputs (and reference outputs) using calibration data.  
+   b. Optimize rounding parameters (and optionally scales) via a local reconstruction loss.  
    c. Freeze the optimized rounding decisions.
-5. Optionally reuse cached activations for fast block‑to‑block updates.
+5. Optionally reuse cached activations to accelerate block‑to‑block optimization.
 6. Restore the original model configuration for inference.
 
-``LearnedRoundTrainer`` orchestrates the block-wise optimization of the rounding parameters.
-Specifically, it wires together:
+``LearnedRoundTrainer`` orchestrates this block‑wise optimization by wiring together:
 
-- A `Learned Round` parametrization (e.g. ``LearnedRoundIdentity``).
-- The types of the classes to compute the block loss (e.g., ``MSELosss``, and ``RoundRegularisationLoss``).
-- Optimizers for the learnable parameters (rounding parameters, scales, etc.).
-- Training configuration arguments (batch size, iterations, AMP dtype, etc.).
+- a learned rounding parameterization (e.g. ``LearnedRoundIdentity``),
+- block‑level reconstruction losses (e.g. ``MSELoss``, ``RoundRegularisationLoss``),
+- optimizers and learning‑rate schedulers,
+- training configuration (batch size, iterations, AMP settings, etc.).
 
-As an example, an instantiation matching the SignRound [2]_ setup (without scale optimization) would be as follows:
+
+Following, an example configuration matching the **SignRound** [2]_ setup (without scale optimization) is provided:
 
 .. code-block:: python
    :caption: `brevitas_examples/common/learned_round/learned_round_trainer.py`
@@ -117,13 +123,12 @@ As an example, an instantiation matching the SignRound [2]_ setup (without scale
                             target_params="learned_round",
                             optimizer_cls="SignSGD",
                             lr=5e-3,
-                            optimizer_kwargs={},
                             lr_scheduler_args=LRSchedulerArgs(
                                 lr_scheduler_cls="LinearLR",
                                 lr_scheduler_kwargs={
                                     "start_factor": 1.0,
                                     "end_factor": 0.0,
-                                    "total_iters": 200,  # tie to iters
+                                    "total_iters": 200,
                                 },
                             ),
                         ),
@@ -142,7 +147,6 @@ As an example, an instantiation matching the SignRound [2]_ setup (without scale
                         name="learned_round",
                         config=LearnedRoundArgs(
                             learned_round_param=LearnedRoundImplType.IDENTITY,
-                            learned_round_kwargs=None,
                         ),
                     )
                 ],
@@ -150,7 +154,8 @@ As an example, an instantiation matching the SignRound [2]_ setup (without scale
         )
     )
 
-Entrypoint Integration 
+
+Entrypoint Integration
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Learned Round is available through Brevitas’ PTQ pipelines, including the LLM and ImageNet entrypoints. Therefore,
@@ -158,56 +163,57 @@ if you using Brevitas' entrypoints:
 
 ✅ You **do not need** to implement caches, block forward functions, or block extraction logic.
 
-The lower-level abstractions (cache objects, block forward hooks, etc.) are primarily relevant if you are
-building a **custom PTQ pipeline** outside the supported entrypoints.
+Lower‑level abstractions (cache objects, block forwards, etc.) are only required when building a **custom PTQ pipeline**
+outside the supported entrypoints.
 
-Example instantiations for the LLM and ImageNet entrypoints can be found at:
+See:
 
 - ``brevitas_examples/llm/llm_quant/learned_round_utils.py``
 - ``brevitas_examples/imagenet_classification/ptq/learned_round_utils.py``
 
-Learned Round has been evaluated in the LLM entrypoint across multiple scenarios, including weight-only and weight-and-activation PTQ,
-and in combination with outlier suppression techniques. For detailed results, as well as instructions on how to reproduce them, see
-``brevitas_examples/papers/learned_round/README.md``.
 
 Extending Learned Round
 -----------------------
 
-The modular design of the Learned Round implementation enables easily adding custom learned round parameterizations, optimizing additional parameters
-(e.g. scales), or integrating custom models and datasets.
+Learned Round is designed to be extensible, supporting:
 
-Therefore, this section is intended for advanced users who want to extend the learned round implementation to support (1) custom learned round parameterizations, and
-(2) models/datasets outside of the LLM/ImageNet entrypoints.
+- custom learned‑round parameterizations,
+- optimization of additional parameters (e.g. scales),
+- integration with custom models and datasets.
+
+This section targets advanced users.
+
 
 Rounding Parameterizations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Learned Round reformulates rounding as:
+Learned Round expresses rounding as:
 
 .. math::
 
-    \text{round}(w) = \mathcal{R}\left(f(w;p_{1})\right) + g(p_{2}), \quad \mathcal{R} \in \{\lfloor \cdot \rceil, \lfloor \cdot \rfloor, \lceil \cdot \rceil\},
+    \text{round}(w) = \mathcal{R}(f(w; p)) + g(p), \quad
+    \mathcal{R} \in \{\lfloor \cdot \rceil,\ \lfloor \cdot \rfloor,\ \lceil \cdot \rceil\},
 
-where :math:`p_{1}` and `p_{2}` are learnable parameters controlling the rounding direction (generally either `f` or `g` is implemented, and
-only a parameter `p` is learned).
+where :math:`p` denotes learnable parameters controlling the rounding behavior
+(typically only one of :math:`f` or :math:`g` is used).
 
-Brevitas provides multiple parameterizations implemented in
-``brevitas/core/function_wrapper/learned_round.py``. Two commonly used choices are:
+Brevitas provides several implementations in
+``brevitas/core/function_wrapper/learned_round.py``, including:
 
-- **Sigmoid** (AdaRound-style):
+- **Sigmoid** (AdaRound‑style):
 
   .. math::
 
      \text{round}(p; w, T) = \lfloor w \rfloor + \sigma(p / T)
 
-- **Identity** (SignRound-style):
+- **Identity** (SignRound‑style):
 
   .. math::
 
-     \text{round}(p; w) =
-     \left\lfloor w + \text{clip}(p, -0.5, 0.5) \right\rceil
-    
-Therefore, the workflow for adding a custom rounding parameterization is:
+     \text{round}(p; w)
+     = \left\lfloor w + \text{clip}(p, -0.5, 0.5) \right\rceil
+
+To add a custom rounding parameterization:
 
 1. Define a class implementing ``forward`` and ``round_forward`` similarly to existing implementations in
    ``brevitas/core/function_wrapper/learned_round.py``.
@@ -215,26 +221,30 @@ Therefore, the workflow for adding a custom rounding parameterization is:
    - ``LearnedRoundImplType`` (``brevitas/inject/enum.py``)
    - ``learned_round_impl`` (``brevitas/quant/solver/common.py``)
 
-Extending to Custom Models/Datasets
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Extending to Custom Models or Datasets
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To use Learned Round with custom models/datasets outside of the supported entrypoints, you will need to implement the following components:
 
 1. **Cache**: A class, inheriting from ``brevitas_examples/common/learned_round/learned_round_utils.py:Cache``, that captures block inputs 
 and reference outputs during the forward pass (see ``brevitas_examples/llm/llm_quant/learned_round_utils.py:CacheLLM`` for an example).
+
 2. **Block forward function**: A function, implementing the `Protocol` ``brevitas_examples/common/learned_round/learned_round_utils.py:BlockForwardFn``, 
 that performs the forward pass through the block being optimized, using the cached inputs and reference 
 outputs (see ``brevitas_examples/llm/llm_quant/learned_round_utils.py:llm_block_forward`` for an example).
+
 3. **Model forward function**: A function, implementing the `Protocol` ``brevitas_examples/common/learned_round/learned_round_utils.py:ModelForwardFn``, 
 that performs a forward pass through the model (see ``brevitas_examples/llm/llm_quant/learned_round_utils.py:llm_forward`` for an example).
+
 4. **Block extraction function**: A function that extracts the blocks to be optimized from the model 
 (see ``brevitas_examples/llm/llm_quant/learned_round_utils.py:get_blocks`` for an example).
 
 Getting Started
 ---------------
 
-To get started with Learned Round, and understand how it can be combined with other PTQ techniques, 
-it is advised to see the examples in the LLM entrypoint, which are provided in ``brevitas_examples/papers/learned_round/README.md``.
+Learned Round has been evaluated in the LLM entrypoint across multiple quantization scenarios, including weight-only and weight-and-activation PTQ,
+and in combination with outlier suppression techniques. For detailed results, as well as instructions on how to reproduce them, see ``brevitas_examples/papers/learned_round/README.md``.
 
 .. rubric:: References
 
