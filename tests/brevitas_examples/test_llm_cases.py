@@ -76,7 +76,29 @@ class LLMRunCases:
                 "quantize_weight_zero_point": True,
                 "awq_scale": True,
                 "awq_clip": True,
-            }
+            },
+            {
+                "model": "hf-internal-testing/tiny-random-LlamaForCausalLM",
+                "gpfq": True,
+                "gpxq_block_name": "model.layers",
+            },
+            {
+                "model": "hf-internal-testing/tiny-random-LlamaForCausalLM",
+                "gpfq": True,
+                "gpxq_block_name": "model.layers",
+                "gpxq_layerwise": True,
+            },
+            {
+                "model": "hf-internal-testing/tiny-random-LlamaForCausalLM",
+                "qronos": True,
+                "gpxq_block_name": "model.layers",
+            },
+            {
+                "model": "hf-internal-testing/tiny-random-LlamaForCausalLM",
+                "qronos": True,
+                "gpxq_block_name": "model.layers",
+                "gpxq_layerwise": True,
+            },
         ],
         ids=[
             "defaults",
@@ -98,7 +120,11 @@ class LLMRunCases:
             "functional_sdpa_quant=True,rotation=fused_no_fx",
             "per_group_w_padding,learned_round=identity",
             "float_e2m1_and_mse",
-            "awq_clip_scale"
+            "awq_clip_scale",
+            "gpfq_blockwise",
+            "gpfq_blockwise_layerwise",
+            "qronos_blockwise",
+            "qronos_blockwise_layerwise",
         ],)
     def case_small_models_toggle_args(self, run_dict, default_run_args, request):
         if config.JIT_ENABLED and run_dict.get("weight_param_method") == "mse":

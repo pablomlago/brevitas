@@ -66,6 +66,14 @@ def create_args_parser() -> ArgumentParser:
         'Attribute for model blocks. Used for faster GPxQ optimization (if FX is not needed) and learned round (default: %(default)s)'
     )
     parser.add_argument(
+        '--gpxq-layerwise',
+        action='store_true',
+        default=False,
+        help='When using blockwise optimization with GPFQ/Qronos, maintain separate quantized '
+        'and float activation caches at each block boundary to match layerwise behavior. '
+        'Only applicable when --gpxq-block-name is set with --gpfq or --qronos. '
+        'Default: %(default)s')
+    parser.add_argument(
         '--gpxq-buffer-device',
         type=str,
         choices=['cpu', 'same'],
@@ -531,6 +539,13 @@ def validate(args: Namespace, extra_args: Optional[List[str]] = None) -> None:
                 'Error: weight_quant_rescaling_init must be positive.'
         if (int(args.gptq) + int(args.gpfq) + int(args.qronos)) > 1:
             warn("GPTQ, GPFQ, and/or Qronos are enabled together.")
+        if args.gpxq_layerwise:
+            if args.gpxq_block_name is None:
+                warn("--gpxq-layerwise has no effect without --gpxq-block-name")
+            if not (args.gpfq or args.qronos):
+                warn(
+                    "--gpxq-layerwise only applies to GPFQ/Qronos. "
+                    "For GPTQ, blockwise is already equivalent to layerwise.")
         if (args.gpfq or args.qronos):
             # create_weight_orig=True creates a copy of the weights for the model to use
             # when disabling weight quantization so that any downstream optimization can

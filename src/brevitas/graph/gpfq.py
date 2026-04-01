@@ -219,6 +219,11 @@ class gpfq_mode(gpxq_mode):
             Default: False
         algorithm_impl (GPFQ): The uninitialized class to execute the algorithm.
             Default: `brevitas.graph.gpfq.GPFQ`
+        single_pass_mode (bool): If True, catch_stopfwd runs a single forward pass
+            instead of the default dual-pass (quant + float). The caller is then
+            responsible for invoking the model twice with the appropriate quantization
+            state. This is used by block_optimization_layerwise to feed separate
+            quantized and float cached inputs. Default: False
         device (str): Device the buffers are stored on. Default: cpu
         dtype (torch.dtype): Datatype the buffers are stored in. Default: torch.float32
 
@@ -243,6 +248,7 @@ class gpfq_mode(gpxq_mode):
             return_forward_output: bool = False,
             act_order: bool = False,
             algorithm_impl: GPFQ = GPFQ,
+            single_pass_mode: bool = False,
             device: str = 'cpu',
             dtype: torch.dtype = torch.float32) -> None:
         if not inplace:
@@ -259,8 +265,28 @@ class gpfq_mode(gpxq_mode):
             dtype)
 
         self.algorithm_impl = algorithm_impl
+        self.single_pass_mode = single_pass_mode
 
     def catch_stopfwd(self, *args, **kwargs):
+        # In single_pass_mode, only run one forward pass. The caller is
+        # responsible for calling the model twice (once with quant enabled,
+        # once with quant disabled) and feeding the appropriate inputs.
+        # This is used by block_optimization_layerwise to feed separate
+        # quantized and float cached activations.
+        if self.single_pass_mode:
+            try:
+                self.orig_forward(*args, **kwargs)
+            except StopFwdException:
+                pass
+            if self.return_forward_output:
+                for name, gpxq_class in self.gpxq_layers.items():
+                    gpxq_class.disable_pre_forward_hook = True
+                out = self.orig_forward(*args, **kwargs)
+                for name, gpxq_class in self.gpxq_layers.items():
+                    gpxq_class.disable_pre_forward_hook = False
+                return out
+            return
+
         # Collect quant input
         try:
             self.orig_forward(*args, **kwargs)
