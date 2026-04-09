@@ -210,7 +210,7 @@ def gpxq_compute_error_stats(
         layer: torch.nn.Module,
         H: torch.Tensor,
         G: Optional[torch.Tensor] = None,
-        device: Optional[Union[str, torch.device]] = None) -> Dict[str, float]:
+        device: Optional[Union[str, torch.device]] = None) -> Dict[str, Dict[str, float]]:
     # This computation only supports nn.Linear, currently
     if not isinstance(layer, (qnn.QuantLinear,)):
         raise NotImplementedError(
@@ -225,7 +225,7 @@ def gpxq_compute_error_stats(
     err = quant_weight - weight
     weight_rel_err = torch.norm(err, p='fro') / torch.norm(weight, p='fro')
     # Compute relative error weighted by the Hessian, i.e. (w-q)^T H (w-q) / w^T H w
-    out_rel_err = torch.norm(err @ H @ err.T, p='fro') / torch.norm(weight @ H @ weight.T, p='fro')
+    out_rel_err = torch.sqrt(torch.trace(err @ H @ err.T) / torch.trace(weight @ H @ weight.T))
     return {
         name: {
             f"{prefix}_rel_weight_err": weight_rel_err.item(),
