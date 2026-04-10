@@ -215,17 +215,21 @@ def gpxq_stats_wrap(layer_update_fn):
         if gpxq_stats_collector.is_active:
             H = deepcopy(self.H)
             G = deepcopy(self.G) if hasattr(self, 'G') else None
+            # No need to deepcopy R since it is only used for statistics computation
+            R = self.R if hasattr(self, 'R') else None
             # Log pre-update statistics
-            gpxq_stats_collector.log("pre_update", name=self.name, layer=self.layer, H=H, G=G)
+            gpxq_stats_collector.log("pre_update", name=self.name, layer=self.layer, H=H, G=G, R=R)
             # Run the layer update function
             layer_update_fn(self, *args, **kwargs)
             # Log post-update statistics
-            gpxq_stats_collector.log("post_update", name=self.name, layer=self.layer, H=H, G=G)
+            gpxq_stats_collector.log("post_update", name=self.name, layer=self.layer, H=H, G=G, R=R)
             # If stats are being collected, print statistics to DEBUG
             logger.debug(
                 f"GPTQ statistics for layer {self.name}: {gpxq_stats_collector.stats[self.name]}")
+            # Delete the copies of H and G to free up space after error computation
             del H
             del G
+            del R
 
     return wrapper
 

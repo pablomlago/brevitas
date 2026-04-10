@@ -85,3 +85,7 @@ def collect_stats(collector: BaseStatsCollector):
         yield
     finally:
         StatsCollectorCtx.reset(token)
+
+
+def is_stats_collector_active():
+    return StatsCollectorCtx.get().is_active

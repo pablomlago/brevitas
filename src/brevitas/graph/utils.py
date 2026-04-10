@@ -210,6 +210,7 @@ def gpxq_compute_error_stats(
         layer: torch.nn.Module,
         H: torch.Tensor,
         G: Optional[torch.Tensor] = None,
+        R: Optional[torch.Tensor] = None,
         device: Optional[Union[str, torch.device]] = None) -> Dict[str, Dict[str, float]]:
     # This computation only supports nn.Linear, currently
     if not isinstance(layer, (qnn.QuantLinear,)):
@@ -220,13 +221,30 @@ def gpxq_compute_error_stats(
     quant_weight = layer.quant_weight().value.to(dtype=dtype, device=device)
     weight = layer.weight_orig.to(dtype=dtype, device=device)
     H = H.to(device=device).squeeze(0)
-    G = G.to(device=device).squeeze(0) if G is not None else H
+    G = G.to(device=device).squeeze(0) if G is not None else G
+    R = R.to(device=device).squeeze(0) if R is not None else R
     # Compute relative error between quantized and original weights
     err = quant_weight - weight
     weight_rel_err = torch.norm(err, p='fro') / torch.norm(weight, p='fro')
     # Compute relative error weighted by the Hessian, i.e. (w-q)^T H (w-q) / w^T H w
     out_rel_err = torch.sqrt(torch.trace(err @ H @ err.T) / torch.trace(weight @ H @ weight.T))
+    fp_out_rel_err = None
+    if G is not None and R is not None:
+        # ||X W^T - X_tilde Q^T||_F^2 = tr(W H W^T) - 2 tr(W G Q^T) + tr(Q R Q^T)
+        # where H = X_tilde^T X_tilde, G = X^T X_tilde, R = X_tilde^T X_tilde
+        # NOTE: The denominator uses H (= X_tilde^T X_tilde) as a proxy for X^T X,
+        # which is exact when X == X_tilde (e.g. for the first layer, or when
+        # use_quant_activations=False and no prior quantized layers).
+        fp_out_rel_err = torch.sqrt(
+            torch.abs(
+                torch.trace(weight @ R @ weight.T) - 2 * torch.trace(weight @ G @ quant_weight.T) +
+                torch.trace(quant_weight @ H @ quant_weight.T)) /
+            torch.trace(weight @ R @ weight.T))
     return {
         name: {
-            f"{prefix}_rel_weight_err": weight_rel_err.item(),
-            f"{prefix}_rel_out_err": out_rel_err.item(),}}
+            f"{prefix}_rel_weight_err":
+                weight_rel_err.item(),
+            f"{prefix}_rel_out_err":
+                out_rel_err.item(),
+            f"{prefix}_fp_rel_out_err":
+                fp_out_rel_err.item() if fp_out_rel_err is not None else None,}}

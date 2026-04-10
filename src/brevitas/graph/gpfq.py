@@ -16,6 +16,8 @@ from brevitas.graph.gpxq import GPxQ
 from brevitas.graph.gpxq import gpxq_mode
 from brevitas.graph.gpxq import SUPPORTED_CONV_OP
 from brevitas.graph.utils import is_conv_transposed
+from brevitas.utils.stats_utils import is_stats_collector_active
+from brevitas.utils.stats_utils import StatsCollectorCtx
 from brevitas.utils.torch_utils import StopFwdException
 
 
@@ -48,6 +50,12 @@ class GPFQ(GPxQ):
         self.G = torch.zeros((self.groups, self.columns, self.columns),
                              device=self.device,
                              dtype=self.dtype)
+        if is_stats_collector_active():
+            # R = \hat{X} \hat{X}^T
+            self.R = torch.zeros((self.groups, self.columns, self.columns),
+                                 device=self.device,
+                                 dtype=self.dtype)
+
         if self.use_intermediate_buffer:
             self.B = torch.zeros((self.groups, self.columns, self.columns),
                                  device=self.device,
