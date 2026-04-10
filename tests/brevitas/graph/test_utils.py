@@ -65,7 +65,6 @@ def test_set_module():
     assert model.sub_model.linear is new_module
 
 
-# TODO: Group under a class, e.g. TestGPXQStats
 # ---------------------------------------------------------------------------
 # Tests for gpxq_compute_error_stats
 # ---------------------------------------------------------------------------
@@ -76,9 +75,14 @@ GPXQ_SEQLEN = 16
 GPXQ_SEED = 42
 GPXQ_NUM_SAMPLES = 8
 
+# Map optimizer name to (class, context-manager constructor)
+_OPT_REGISTRY = {
+    'gptq': (GPTQ, gptq_mode),
+    'qronos': (Qronos, partial(gpfq_mode, algorithm_impl=Qronos)),}
+
 
 class QuantLinearModel(nn.Module):
-    """Minimal single-layer model for GPTQ stats tests."""
+    """Two-layer model for GPxQ stats tests."""
 
     def __init__(self):
         super().__init__()
@@ -100,289 +104,215 @@ class QuantLinearModel(nn.Module):
 
 
 def _build_model_and_calibration_data():
-    """Create a QuantLinearModel with fixed weights and deterministic calibration data.
-
-    Returns the model (eval mode, quantizer initialized) and the calibration
-    input tensor of shape ``[GPXQ_NUM_SAMPLES, GPXQ_SEQLEN, GPXQ_IN_FEATURES]``.
-    """
+    """Create a :class:`QuantLinearModel` with fixed weights and deterministic
+    calibration data of shape ``[GPXQ_NUM_SAMPLES, GPXQ_SEQLEN, GPXQ_IN_FEATURES]``."""
     torch.manual_seed(GPXQ_SEED)
     model = QuantLinearModel()
     model.eval()
-    # Run a forward pass to initialise the weight quantizer (scale / zero-point)
     with torch.no_grad():
         model(torch.randn(1, GPXQ_SEQLEN, GPXQ_IN_FEATURES))
-    # Build deterministic calibration data
     torch.manual_seed(GPXQ_SEED + 1)
     calib_input = torch.randn(GPXQ_NUM_SAMPLES, GPXQ_SEQLEN, GPXQ_IN_FEATURES)
     return model, calib_input
 
 
-# TODO: Generalize names
-def _run_gptq_with_stats(model, calib_input, opt='gptq', captured_hessians=None):
-    """Run ``gptq_mode`` with a mocked ``_single_layer_update`` and return the
+def _get_layer_inputs(model, calib_input, layer):
+    """Return ``(X_quant, X_float)`` — the activations produced by *layer*
+    with quantised vs float weights.
+
+    These correspond to the inputs that the *next* layer would see during
+    the two forward passes of ``gpfq_mode.catch_stopfwd``."""
+    with torch.no_grad():
+        X_quant = layer(calib_input)
+        with quantization_status_manager(model,
+                                         disable_act_quant=True,
+                                         disable_weight_quant=True,
+                                         disable_bias_quant=True,
+                                         is_training=False):
+            X_float = layer(calib_input)
+    return X_quant, X_float
+
+
+def _run_gpxq_with_stats(model, calib_input, opt='gptq', captured_matrices=None):
+    """Run a GPxQ pass with a no-op ``_single_layer_update`` and return the
     collected :class:`DictStatsCollector`.
 
-    The inner ``_single_layer_update`` is replaced by a no-op that is still
-    wrapped with :func:`gpxq_stats_wrap`, so the statistics collection
-    machinery (Hessian capture, pre/post error logging) executes normally
-    while the actual GPTQ weight-update algorithm is skipped.
-
-    If *captured_hessians* is a dict, the raw ``H`` tensors forwarded to the
-    stat callbacks are stored under ``"pre_H"`` / ``"post_H"`` keys.
-    """
+    If *captured_matrices* is a dict, raw ``H``, ``G``, ``R`` tensors are
+    stored under ``"{layer}_{prefix}_{matrix}"`` keys."""
 
     @gpxq_stats_wrap
-    def _noop_single_layer_update(self):
+    def _noop(self):
         pass
 
-    if opt == 'gptq':
-        opt_class, opt_mode = GPTQ, gptq_mode
-    elif opt == 'qronos':
-        opt_class, opt_mode = Qronos, partial(gpfq_mode, algorithm_impl=Qronos)
-    else:
-        raise ValueError(f"{opt} is not available for testing")
+    opt_class, opt_mode = _OPT_REGISTRY[opt]
 
     collector = DictStatsCollector()
     with collect_stats(collector):
-        with patch.object(opt_class, '_single_layer_update', _noop_single_layer_update):
+        with patch.object(opt_class, '_single_layer_update', _noop):
             with torch.no_grad():
-                with opt_mode(model, use_quant_activations=False, create_weight_orig=True) as gptq:
+                with opt_mode(model, use_quant_activations=False, create_weight_orig=True) as ctx:
+                    if captured_matrices is not None:
 
-                    # If the caller wants to capture raw Hessians, override
-                    # the stat functions after gptq_mode registers its defaults
-                    if captured_hessians is not None:
-
-                        def _capture_hessian(prefix, name, layer, H, G=None, R=None, **kw):
-                            captured_hessians[f"{name}_{prefix}_H"] = H.clone()
+                        def _capture(prefix, name, layer, H, G=None, R=None, **kw):
+                            captured_matrices[f"{name}_{prefix}_H"] = H.clone()
                             if G is not None:
-                                captured_hessians[f"{name}_{prefix}_G"] = G.clone()
+                                captured_matrices[f"{name}_{prefix}_G"] = G.clone()
                             if R is not None:
-                                captured_hessians[f"{name}_{prefix}_R"] = R.clone()
+                                captured_matrices[f"{name}_{prefix}_R"] = R.clone()
                             return gpxq_compute_error_stats(
-                                prefix=prefix, name=name, layer=layer, H=H, G=G)
+                                prefix=prefix, name=name, layer=layer, H=H, G=G, R=R)
 
-                        collector.on(
-                            "pre_update", functools.partial(_capture_hessian, prefix="pre"))
-                        collector.on(
-                            "post_update", functools.partial(_capture_hessian, prefix="post"))
+                        collector.on("pre_update", functools.partial(_capture, prefix="pre"))
+                        collector.on("post_update", functools.partial(_capture, prefix="post"))
 
-                    gptq_model = gptq.model
-                    for _ in range(gptq.num_layers):
-                        gptq_model(calib_input)
-                        gptq.update()
+                    gpxq_model = ctx.model
+                    for _ in range(ctx.num_layers):
+                        gpxq_model(calib_input)
+                        ctx.update()
     return collector
 
 
-# TODO: Refactor this code
-def _compute_expected_hessian(calib_input, quant_calib_input=None, qronos=False):
-    """Replicate the iterative covariance formula from
-    ``GPTQ.compute_iterative_covariance`` for a single batch fed to a
-    Linear layer.
+def _compute_expected_covariance(left, right=None, qronos=False):
+    """Compute the expected normalised covariance ``left^T @ right / T`` the
+    same way ``process_input`` + ``update_batch`` would.
 
-    For input ``X`` of shape ``[N, S, C]`` (batch, sequence, features),
-    ``process_input`` flattens to ``[N*S, C]`` before computing the
-    covariance, so the effective number of samples is ``N * S``::
+    Parameters
+    ----------
+    left, right : Tensor of shape ``[N, S, C]``
+        If *right* is ``None`` it defaults to *left* (self-correlation).
+    qronos : bool
+        Use Qronos normalisation (``1/T``) vs GPTQ (``2/T``).
 
-        H = (2 / (N*S)) * X_flat^T X_flat     shape [1, C, C]
+    Returns
+    -------
+    Tensor of shape ``[1, C, C]``.
     """
-    quant_calib_input = quant_calib_input if quant_calib_input is not None else calib_input
-    # Mirror process_input: reshape to 2-D then transpose
-    X = calib_input.reshape(-1, calib_input.shape[-1]).to(torch.float32)  # [N*S, C]
-    T = X.shape[0]  # effective sample count = N * S
-    X = X.t().unsqueeze(0)  # [1, C, T]
-    X = math.sqrt(1.0 / T) * X if qronos else math.sqrt(2.0 / T) * X
-    X_tilde = X
+    if right is None:
+        right = left
+    scale = (lambda T: math.sqrt(1.0 / T)) if qronos else (lambda T: math.sqrt(2.0 / T))
 
-    X = quant_calib_input.reshape(-1, quant_calib_input.shape[-1]).to(torch.float32)  # [N*S, C]
-    T = X.shape[0]  # effective sample count = N * S
-    X = X.t().unsqueeze(0)  # [1, C, T]
-    X = math.sqrt(1.0 / T) * X if qronos else math.sqrt(2.0 / T) * X
+    def _prep(x):
+        x = x.reshape(-1, x.shape[-1]).to(torch.float32)
+        T = x.shape[0]
+        return (scale(T) * x.t()).unsqueeze(0)  # [1, C, T]
 
-    H = X_tilde.bmm(X.transpose(2, 1))  # [1, C, C]
-    return H
+    return _prep(left).bmm(_prep(right).transpose(2, 1))  # [1, C, C]
 
 
-# -- Test 1 ----------------------------------------------------------------
+class TestGPXQStats:
+    """Tests for the statistics collection machinery around GPxQ algorithms."""
 
+    # -- Hessian / covariance capture tests --------------------------------
 
-def test_gpxq_hessian_captured():
-    """The Hessian tensor forwarded to the stats callback must equal the
-    covariance matrix accumulated during calibration."""
-    model, calib_input = _build_model_and_calibration_data()
+    def test_gptq_hessian_captured(self):
+        """GPTQ Hessian forwarded to the stats callback must match the
+        covariance accumulated during calibration."""
+        model, calib_input = _build_model_and_calibration_data()
 
-    captured = {}
-    _run_gptq_with_stats(model, calib_input, captured_hessians=captured)
+        captured = {}
+        _run_gpxq_with_stats(model, calib_input, captured_matrices=captured)
 
-    H_expected = _compute_expected_hessian(calib_input)
-    torch.testing.assert_close(captured["linear_1_pre_H"], H_expected)
-    # Since _single_layer_update is a no-op, pre and post use the same H
-    torch.testing.assert_close(captured["linear_1_post_H"], H_expected)
+        H_expected = _compute_expected_covariance(calib_input)
+        for prefix in ("pre", "post"):
+            torch.testing.assert_close(captured[f"linear_1_{prefix}_H"], H_expected)
 
+    def test_qronos_matrices_captured(self):
+        """Qronos H, G, R matrices forwarded to the stats callback must match
+        hand-computed covariances for both layers."""
+        model, calib_input = _build_model_and_calibration_data()
+        X_quant_1, X_float_1 = _get_layer_inputs(model, calib_input, model.linear_1)
 
-# TODO: Simplify test
-def test_gpfq_hessian_captured():
-    """The Hessian tensor forwarded to the stats callback must equal the
-    covariance matrix accumulated during calibration."""
-    model, calib_input = _build_model_and_calibration_data()
+        captured = {}
+        _run_gpxq_with_stats(model, calib_input, opt='qronos', captured_matrices=captured)
 
-    # Capture quant_input for the first linear layer
-    with torch.no_grad():
-        linear_1_quant_input = model.linear_1(calib_input)
+        # Expected covariances per layer
+        expected = {
+            "linear_1": {
+                "H": _compute_expected_covariance(calib_input, qronos=True),
+                # For layer 1, X_quant == X_float == calib_input, so G == H
+                "G": _compute_expected_covariance(calib_input, qronos=True),},
+            "linear_2": {
+                "H": _compute_expected_covariance(X_quant_1, qronos=True),
+                "G": _compute_expected_covariance(X_float_1, X_quant_1, qronos=True),
+                "R": _compute_expected_covariance(X_float_1, qronos=True),},}
 
-        with quantization_status_manager(
-                model,
-                disable_act_quant=True,
-                disable_weight_quant=True,
-                disable_bias_quant=True,
-                is_training=False,
-        ):
-            linear_1_fp_input = model.linear_1(calib_input)
+        for layer_name, matrices in expected.items():
+            for mat_name, mat_expected in matrices.items():
+                for prefix in ("pre", "post"):
+                    key = f"{layer_name}_{prefix}_{mat_name}"
+                    torch.testing.assert_close(captured[key], mat_expected, msg=key)
 
-    captured = {}
-    _run_gptq_with_stats(model, calib_input, opt='qronos', captured_hessians=captured)
+    # -- Error statistics tests --------------------------------------------
 
-    linear_1_H_expected = _compute_expected_hessian(calib_input, qronos=True)
-    linear_2_H_expected = _compute_expected_hessian(linear_1_quant_input, qronos=True)
-    linear_2_G_expected = _compute_expected_hessian(
-        linear_1_fp_input, linear_1_quant_input, qronos=True)
-    linear_2_R_expected = _compute_expected_hessian(linear_1_fp_input, qronos=True)
-    torch.testing.assert_close(captured["linear_1_pre_H"], linear_1_H_expected)
-    # Since _single_layer_update is a no-op, pre and post use the same H
-    torch.testing.assert_close(captured["linear_1_post_H"], linear_1_H_expected)
+    @staticmethod
+    def _assert_error_stats(stats, expected, prefix):
+        """Assert that every key in *expected* matches the collected stats for
+        the given *prefix* (``"pre"`` or ``"post"``)."""
+        for key, value in expected.items():
+            stat_key = f"{prefix}_{key}"
+            assert stat_key in stats, f"Missing stat '{stat_key}'"
+            assert stats[stat_key] == pytest.approx(value, abs=1e-5), stat_key
 
-    torch.testing.assert_close(captured["linear_1_pre_G"], linear_1_H_expected)
-    # Since _single_layer_update is a no-op, pre and post use the same H
-    torch.testing.assert_close(captured["linear_1_post_G"], linear_1_H_expected)
+    def test_gptq_error_stats(self):
+        """GPTQ error statistics must match values computed directly from the
+        inputs and weights.
 
-    torch.testing.assert_close(captured["linear_2_pre_H"], linear_2_H_expected)
-    # Since _single_layer_update is a no-op, pre and post use the same H
-    torch.testing.assert_close(captured["linear_2_post_H"], linear_2_H_expected)
+        Cross-checks the Hessian-domain identity
+        ``||XE^T||_F^2 = tr(E H E^T)`` against the direct Frobenius-norm
+        computation.  Since ``_single_layer_update`` is a no-op, pre- and
+        post-update statistics are identical."""
+        model, calib_input = _build_model_and_calibration_data()
+        collector = _run_gpxq_with_stats(model, calib_input)
 
-    torch.testing.assert_close(captured["linear_2_pre_G"], linear_2_G_expected)
-    # Since _single_layer_update is a no-op, pre and post use the same H
-    torch.testing.assert_close(captured["linear_2_post_G"], linear_2_G_expected)
+        layer = model.linear_1
+        layer_name = "linear_1"
+        assert layer_name in collector.stats
+        stats = collector.stats[layer_name]
 
-    torch.testing.assert_close(captured["linear_2_pre_R"], linear_2_R_expected)
-    # Since _single_layer_update is a no-op, pre and post use the same H
-    torch.testing.assert_close(captured["linear_2_post_R"], linear_2_R_expected)
+        dtype = torch.float32
+        Q = layer.quant_weight().value.to(dtype=dtype)
+        W = layer.weight_orig.to(dtype=dtype)
+        err = Q - W
+        X = calib_input.reshape(-1, GPXQ_IN_FEATURES).to(dtype)
 
+        expected = {
+            "rel_weight_err": (torch.norm(err, p='fro') / torch.norm(W, p='fro')).item(),
+            "rel_out_err": (torch.norm(X @ err.T, p='fro') / torch.norm(X @ W.T, p='fro')).item(),}
 
-# -- Test 2 ----------------------------------------------------------------
+        for prefix in ("pre", "post"):
+            self._assert_error_stats(stats, expected, prefix)
 
+    def test_qronos_error_stats(self):
+        """Qronos error statistics — including the mismatched-objective
+        ``fp_rel_out_err`` — must match direct computation.
 
-# TODO: Refactor test_gpxq_error_stats and test_gpfq_error_stats to share code, e.g. via a helper function that takes the opt as an argument.
-# The expected error computations are different but the overall structure of the test is similar.
-def test_gpxq_error_stats():
-    """The error statistics collected during GPTQ must match values computed
-    by hand from the quantised weights, original weights and Hessian.
+        The mismatched objective is ``||X W^T - X_tilde Q^T||_F / ||X W^T||_F``
+        where ``X`` / ``X_tilde`` are the float / quantised-weight inputs.
+        Since ``_single_layer_update`` is a no-op, pre == post."""
+        model, calib_input = _build_model_and_calibration_data()
+        collector = _run_gpxq_with_stats(model, calib_input, opt='qronos')
 
-    The expected relative output error ``||X(Q-W)^T||_F / ||XW^T||_F`` is
-    computed in two independent ways and cross-checked:
+        layer = model.linear_2
+        layer_name = "linear_2"
+        assert layer_name in collector.stats
+        stats = collector.stats[layer_name]
 
-    * **From the inputs** (``X``): directly as the Frobenius norm ratio of
-      the output error vs. the float output.
-    * **From the Hessian** (``H``): using the identity
-      ``||XE^T||_F^2 = tr(E H E^T)`` (up to a constant that cancels in the
-      ratio), giving ``sqrt(tr(E H E^T) / tr(W H W^T))``.
+        dtype = calib_input.dtype
+        Q = layer.quant_weight().value.to(dtype=dtype)
+        W = layer.weight_orig.to(dtype=dtype)
+        err = Q - W
 
-    Because ``_single_layer_update`` is mocked to a no-op the weights are
-    *not* modified by GPTQ, so pre- and post-update statistics are identical.
-    """
-    model, calib_input = _build_model_and_calibration_data()
-    collector = _run_gptq_with_stats(model, calib_input)
+        X_quant, X_float = _get_layer_inputs(model, calib_input, model.linear_1)
+        X_quant = X_quant.reshape(-1, GPXQ_OUT_FEATURES).to(dtype)
+        X_float = X_float.reshape(-1, GPXQ_OUT_FEATURES).to(dtype)
 
-    layer = model.linear_1
-    layer_name = "linear_1"
-    assert layer_name in collector.stats, (
-        f"No stats collected for '{layer_name}'. Keys: {list(collector.stats.keys())}")
+        expected = {
+            "rel_weight_err": (torch.norm(err, p='fro') / torch.norm(W, p='fro')).item(),
+            "rel_out_err":
+                (torch.norm(X_quant @ err.T, p='fro') / torch.norm(X_quant @ W.T, p='fro')).item(),
+            "fp_rel_out_err": (
+                torch.norm(X_float @ W.T - X_quant @ Q.T, p='fro') /
+                torch.norm(X_float @ W.T, p='fro')).item(),}
 
-    stats = collector.stats[layer_name]
-
-    # -- Compute expected values by hand --
-    H = _compute_expected_hessian(calib_input).squeeze(0)  # [C, C]
-    dtype = H.dtype
-    Q = layer.quant_weight().value.to(dtype=dtype)  # [OC, C]
-    W = layer.weight_orig.to(dtype=dtype, device=Q.device)  # [OC, C]
-    err = Q - W
-
-    expected_rel_weight_err = (torch.norm(err, p='fro') / torch.norm(W, p='fro')).item()
-
-    X_flat = calib_input.reshape(-1, GPXQ_IN_FEATURES).to(dtype)
-    rel_out_from_X = (torch.norm(X_flat @ err.T, p='fro') /
-                      torch.norm(X_flat @ W.T, p='fro')).item()
-
-    # -- Assert pre-update stats --
-    assert stats["pre_rel_weight_err"] == pytest.approx(expected_rel_weight_err, abs=1e-6)
-    assert stats["pre_rel_out_err"] == pytest.approx(rel_out_from_X, abs=1e-5)
-
-    # -- Assert post-update stats (identical because the mock is a no-op) --
-    assert stats["post_rel_weight_err"] == pytest.approx(expected_rel_weight_err, abs=1e-6)
-    assert stats["post_rel_out_err"] == pytest.approx(rel_out_from_X, abs=1e-5)
-
-
-def test_gpfq_error_stats():
-    """Verify that the mismatched output error statistic ``fp_rel_out_err``
-    collected during Qronos matches the hand-computed value.
-
-    Qronos (and GPFQ) minimise the *mismatched* objective
-    ``||X W^T - X_tilde Q^T||_F`` where ``X`` is the float-weight input
-    and ``X_tilde`` is the quantised-weight input to the layer.  The stat
-    ``fp_rel_out_err`` captures this via the Hessian-domain formula::
-
-        sqrt(|tr(W H W^T) - 2 tr(W G Q^T) + tr(Q R Q^T)| / tr(W H W^T))
-
-    where ``H = X_tilde^T X_tilde``, ``G = X^T X_tilde``,
-    ``R = X_tilde^T X_tilde`` (all normalised by ``1/T``).
-
-    Because ``_single_layer_update`` is mocked to a no-op, pre- and
-    post-update statistics are identical.
-    """
-    model, calib_input = _build_model_and_calibration_data()
-    collector = _run_gptq_with_stats(model, calib_input, opt='qronos')
-
-    layer = model.linear_2
-    layer_name = "linear_2"
-    assert layer_name in collector.stats, (
-        f"No stats collected for '{layer_name}'. Keys: {list(collector.stats.keys())}")
-
-    stats = collector.stats[layer_name]
-
-    # -- Compute expected values by hand --
-    dtype = calib_input.dtype
-    Q = layer.quant_weight().value.to(dtype=dtype)  # [OC, C]
-    W = layer.weight_orig.to(dtype=dtype, device=Q.device)  # [OC, C]
-    err = Q - W
-
-    # Obtain the inputs that linear_2 sees during gpfq_mode calibration:
-    #   X_tilde = output of linear_1 with quantised weights (first fwd pass)
-    #   X       = output of linear_1 with float weights     (second fwd pass)
-    with torch.no_grad():
-        X_tilde = model.linear_1(calib_input)
-        with quantization_status_manager(
-                model,
-                disable_act_quant=True,
-                disable_weight_quant=True,
-                disable_bias_quant=True,
-                is_training=False,
-        ):
-            X = model.linear_1(calib_input)
-
-        expected_rel_weight_err = (torch.norm(Q - W, p='fro') / torch.norm(W, p='fro')).item()
-
-        X = X.reshape(-1, GPXQ_OUT_FEATURES).to(dtype)
-        X_tilde = X_tilde.reshape(-1, GPXQ_OUT_FEATURES).to(dtype)
-
-        expected_fp_rel_out_err = (
-            torch.norm(X @ W.T - X_tilde @ Q.T, p='fro') / torch.norm(X @ W.T, p='fro')).item()
-        expected_rel_out_err = (
-            torch.norm(X_tilde @ err.T, p='fro') / torch.norm(X_tilde @ W.T, p='fro')).item()
-
-    # -- Assert pre-update stats --
-    assert stats["pre_rel_weight_err"] == pytest.approx(expected_rel_weight_err, abs=1e-6)
-    assert stats["pre_rel_out_err"] == pytest.approx(expected_rel_out_err, abs=1e-5)
-    assert stats["pre_fp_rel_out_err"] == pytest.approx(expected_fp_rel_out_err, abs=1e-5)
-
-    # -- Assert post-update stats (identical because the mock is a no-op) --
-    assert stats["post_rel_weight_err"] == pytest.approx(expected_rel_weight_err, abs=1e-6)
-    assert stats["post_rel_out_err"] == pytest.approx(expected_rel_out_err, abs=1e-5)
-    assert stats["post_fp_rel_out_err"] == pytest.approx(expected_fp_rel_out_err, abs=1e-5)
+        for prefix in ("pre", "post"):
+            self._assert_error_stats(stats, expected, prefix)

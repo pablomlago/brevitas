@@ -230,11 +230,6 @@ def gpxq_compute_error_stats(
     out_rel_err = torch.sqrt(torch.trace(err @ H @ err.T) / torch.trace(weight @ H @ weight.T))
     fp_out_rel_err = None
     if G is not None and R is not None:
-        # ||X W^T - X_tilde Q^T||_F^2 = tr(W H W^T) - 2 tr(W G Q^T) + tr(Q R Q^T)
-        # where H = X_tilde^T X_tilde, G = X^T X_tilde, R = X_tilde^T X_tilde
-        # NOTE: The denominator uses H (= X_tilde^T X_tilde) as a proxy for X^T X,
-        # which is exact when X == X_tilde (e.g. for the first layer, or when
-        # use_quant_activations=False and no prior quantized layers).
         fp_out_rel_err = torch.sqrt(
             torch.abs(
                 torch.trace(weight @ R @ weight.T) - 2 * torch.trace(weight @ G @ quant_weight.T) +
