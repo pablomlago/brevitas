@@ -77,7 +77,7 @@ class DictStatsCollector(BaseStatsCollector):
 
     def save_to_yaml(self, path: str) -> None:
         with open(path, 'w') as f:
-            yaml.dump(self.stats, f)
+            yaml.dump(self.stats, f, sort_keys=False)
 
 
 StatsCollectorCtx: ContextVar[BaseStatsCollector] = ContextVar(
