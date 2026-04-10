@@ -10,6 +10,8 @@ from typing import Any
 from typing import Dict
 from typing import Protocol
 
+import yaml
+
 
 class StatFn(Protocol):
 
@@ -72,6 +74,10 @@ class DictStatsCollector(BaseStatsCollector):
 
     def _log(self, fn: StatFn, **payload) -> None:
         recursive_update(self.stats, fn(**payload))
+
+    def save_to_yaml(self, path: str) -> None:
+        with open(path, 'w') as f:
+            yaml.dump(self.stats, f)
 
 
 StatsCollectorCtx: ContextVar[BaseStatsCollector] = ContextVar(

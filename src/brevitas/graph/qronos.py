@@ -73,6 +73,7 @@ class Qronos(GPFQ):
                 self.G += inp_processed.bmm(self.quant_input.transpose(2, 1))
             # Update buffer for quant_input @ quant_input.T is statistics are captured
             if hasattr(self, 'R'):
+                self.R *= (self.nsamples - batch_size) / self.nsamples
                 if self.use_intermediate_buffer:
                     self.B.copy_(inp_processed.bmm(inp_processed.transpose(2, 1)))
                     self.R += self.B

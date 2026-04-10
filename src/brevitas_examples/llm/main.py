@@ -61,6 +61,7 @@ from brevitas_examples.llm.llm_quant.export import convert_hf_hparams_to_gguf
 from brevitas_examples.llm.llm_quant.export import gguf_mapping
 from brevitas_examples.llm.llm_quant.gpxq import apply_gpfq
 from brevitas_examples.llm.llm_quant.gpxq import apply_gptq
+from brevitas_examples.llm.llm_quant.gpxq import apply_gpxq_stats
 from brevitas_examples.llm.llm_quant.gpxq import apply_magr
 from brevitas_examples.llm.llm_quant.gpxq import apply_qronos
 from brevitas_examples.llm.llm_quant.learned_round_utils import apply_learned_round
@@ -650,6 +651,15 @@ def quantize_llm(args, extra_args=None):
                 model.load_state_dict(torch.load(args.checkpoint_name, map_location='cpu'))
             model = offload_model(model)
             print("Checkpoint loaded.")
+
+        if "error" in args.ptq_stats:
+            collector = apply_gpxq_stats(
+                model,
+                calibration_loader,
+                block_name=args.gpxq_block_name,
+                buffer_device=args.gpxq_buffer_device)
+            # Save the collected stats to a file for later analysis
+            collector.save_to_yaml(f"./gpxq_stats.yaml")
 
         if args.gptq and not args.load_checkpoint:
             print("Applying GPTQ...")

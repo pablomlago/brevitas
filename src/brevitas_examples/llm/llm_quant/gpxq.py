@@ -13,9 +13,12 @@ from brevitas.graph.gpfq import GPFQ
 from brevitas.graph.gpfq import gpfq_mode
 from brevitas.graph.gptq import GPTQ
 from brevitas.graph.gptq import gptq_mode
+from brevitas.graph.gpxq import gpxq_stats_wrap
 from brevitas.graph.magr import magr_mode
 from brevitas.graph.qronos import Qronos
 from brevitas.utils.python_utils import recurse_getattr
+from brevitas.utils.stats_utils import collect_stats
+from brevitas.utils.stats_utils import DictStatsCollector
 from brevitas.utils.torch_utils import StopFwdException
 from brevitas_examples.common.axe import A2GPFQ
 from brevitas_examples.common.axe import A2GPTQ
@@ -292,3 +295,53 @@ def apply_magr(
             for inps in tqdm(dataloader, desc="Calculating covariances..."):
                 magr_model(**inps)
             magr.update()
+
+
+class _ErrorStats(Qronos):
+    """Qronos variant whose weight-update step is a no-op.
+
+    The ``@gpxq_stats_wrap`` decorator ensures that pre- and post-update
+    error statistics are still logged to the active stats collector,
+    even though no weight modification takes place.
+    """
+
+    @gpxq_stats_wrap
+    def _single_layer_update(self, beta: int = 1e4):
+        pass
+
+
+@torch.no_grad()
+def apply_gpxq_stats(
+        model,
+        dataloader,
+        act_order=False,
+        group_of_parallel_layers=None,
+        block_name=None,
+        buffer_device='cpu',
+        buffer_dtype=torch.float32) -> DictStatsCollector:
+    """Run GPxQ calibration and collect per-layer error statistics without
+    modifying model weights.
+
+    Uses the dual-forward-pass calibration (quantised and float weights)
+    to accumulate the H, G, and R covariance matrices for every quantised
+    layer, then computes relative weight error, relative output error,
+    and full-precision output error.
+
+    Returns
+    -------
+    DictStatsCollector
+        Collector whose ``.stats`` attribute holds the per-layer metrics.
+        Can be saved to YAML via ``collector.save_to_yaml(path)``.
+    """
+    collector = DictStatsCollector()
+    with collect_stats(collector):
+        _dual_optimization_callback(
+            model,
+            dataloader,
+            act_order=act_order,
+            block_name=block_name,
+            group_of_parallel_layers=group_of_parallel_layers,
+            algorithm_impl=_ErrorStats,
+            device=buffer_device,
+            dtype=buffer_dtype)
+    return collector
