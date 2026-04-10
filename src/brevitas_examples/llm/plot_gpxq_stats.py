@@ -134,6 +134,27 @@ def _plot_pre_vs_post(layer_names, short_names, stats, metrics, figsize):
     return fig
 
 
+def _plot_single_metric_pre_post(layer_names, short_names, stats, metric, figsize):
+    """Line plot of pre vs post for a single metric with log-scale y-axis."""
+    fig, ax = plt.subplots(figsize=figsize)
+    xs = range(len(layer_names))
+
+    pre = _get_values(stats, layer_names, "pre", metric)
+    post = _get_values(stats, layer_names, "post", metric)
+
+    ax.plot(xs, pre, "--", marker="o", markersize=3, linewidth=1, label="pre", alpha=0.8)
+    ax.plot(xs, post, "-", marker="s", markersize=3, linewidth=1, label="post", alpha=0.8)
+    ax.set_yscale("log")
+    ax.set_xticks(list(xs))
+    ax.set_xticklabels(short_names, rotation=45, ha="right", fontsize=7)
+    ax.set_ylabel("Error (log scale)")
+    ax.set_title(METRIC_LABELS[metric])
+    ax.legend(fontsize=8)
+    ax.grid(axis="y", alpha=0.3)
+    fig.tight_layout()
+    return fig
+
+
 def _plot_error_reduction(layer_names, short_names, stats, metrics, figsize):
     """Bar chart of ``(pre - post) / pre`` for each metric."""
     n = len(metrics)
@@ -208,7 +229,15 @@ def main():
         plt.close(fig)
         print(f"Saved {path}")
 
-    # Plot 3 & 4: Pre vs post / error reduction (only when they differ)
+    # Plot 3: Per-metric grouped bar charts (pre vs post) — always generated
+    for m in metrics:
+        fig = _plot_single_metric_pre_post(layer_names, short_names, stats, m, figsize)
+        path = os.path.join(args.output, f"{m}_pre_post.{fmt}")
+        fig.savefig(path, dpi=150)
+        plt.close(fig)
+        print(f"Saved {path}")
+
+    # Plot 4 & 5: Pre vs post line / error reduction (only when they differ)
     if _has_different_pre_post(stats, metrics):
         fig = _plot_pre_vs_post(layer_names, short_names, stats, metrics, figsize)
         path = os.path.join(args.output, f"pre_vs_post.{fmt}")
@@ -222,7 +251,7 @@ def main():
         plt.close(fig)
         print(f"Saved {path}")
     else:
-        print("Pre and post errors are identical — skipping comparison plots.")
+        print("Pre and post errors are identical — skipping line comparison plots.")
 
 
 if __name__ == "__main__":
