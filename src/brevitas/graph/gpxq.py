@@ -230,6 +230,8 @@ def gpxq_stats_wrap(layer_update_fn):
             del H
             del G
             del R
+        else:
+            layer_update_fn(self, *args, **kwargs)
 
     return wrapper
 

@@ -16,6 +16,7 @@ except:
 import warnings
 
 from brevitas.graph.gpfq import GPFQ
+from brevitas.graph.gpxq import gpxq_stats_wrap
 from brevitas.graph.gpxq import SUPPORTED_CONV_OP
 from brevitas.graph.utils import is_conv_transposed
 from brevitas.utils.torch_utils import StopFwdException
@@ -102,6 +103,7 @@ class Qronos(GPFQ):
             current_layer.forward_count = 0
             raise StopFwdException
 
+    @gpxq_stats_wrap
     def _single_layer_update(self, beta: int = 1e4):
         from brevitas.graph.magr import _power_iteration
         assert not self.layer.weight_quant.requires_quant_input, \

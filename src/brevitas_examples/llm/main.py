@@ -32,8 +32,7 @@ from brevitas.graph.utils import remove_weight_orig
 from brevitas.nn.quant_sdpa import ScaledDotProductAttention
 from brevitas.utils.logging import setup_logger
 from brevitas.utils.python_utils import hooked_on_a_function
-from brevitas.utils.stats_utils import collect_stats
-from brevitas.utils.stats_utils import DictStatsCollector
+from brevitas.utils.stats_utils import collect_stats_ctx
 from brevitas_examples.common.accelerate_utils.accelerate import offload_model
 from brevitas_examples.common.accelerate_utils.accelerate import remove_hooks
 from brevitas_examples.common.accelerate_utils.accelerate import update_internal_dict
@@ -663,9 +662,7 @@ def quantize_llm(args, extra_args=None):
 
         if args.gptq and not args.load_checkpoint:
             print("Applying GPTQ...")
-            stats_collector_ctx = collect_stats(
-                DictStatsCollector()) if "gptq" in args.ptq_stats else nullcontext()
-            with stats_collector_ctx:
+            with collect_stats_ctx("gptq", args.ptq_stats):
                 apply_gptq(
                     model,
                     calibration_loader,
@@ -692,13 +689,16 @@ def quantize_llm(args, extra_args=None):
 
         if args.qronos and not args.load_checkpoint:
             print("Applying Qronos...")
-            apply_qronos(
-                model,
-                calibration_loader,
-                alpha=args.qronos_alpha,
-                act_order=args.gpxq_act_order,
-                block_name=args.gpxq_block_name,
-                buffer_device=args.gpxq_buffer_device)
+            with collect_stats_ctx("qronos", args.ptq_stats) as stats_ctx:
+                apply_qronos(
+                    model,
+                    calibration_loader,
+                    alpha=args.qronos_alpha,
+                    act_order=args.gpxq_act_order,
+                    block_name=args.gpxq_block_name,
+                    buffer_device=args.gpxq_buffer_device)
+                stats_ctx.save_to_yaml(f"./qronos_stats.yaml")
+
             print("Qronos applied.")
 
         if args.bias_corr and not args.load_checkpoint:

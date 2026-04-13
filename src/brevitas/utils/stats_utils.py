@@ -5,9 +5,12 @@ from abc import ABC
 from abc import abstractmethod
 from collections.abc import Mapping
 from contextlib import contextmanager
+from contextlib import nullcontext
 from contextvars import ContextVar
 from typing import Any
+from typing import ContextManager
 from typing import Dict
+from typing import List
 from typing import Protocol
 
 import yaml
@@ -32,6 +35,10 @@ class BaseStatsCollector(ABC):
             self._log(fn, **payload)
 
     @abstractmethod
+    def save_to_yaml(self, path: str) -> None:
+        pass
+
+    @abstractmethod
     def _log(self, fn: StatFn, **payload) -> None:
         pass
 
@@ -49,6 +56,9 @@ class NullCollector(BaseStatsCollector):
         pass
 
     def _log(self, fn: StatFn, **payload) -> None:
+        pass
+
+    def save_to_yaml(self, path: str) -> None:
         pass
 
     # NullCollector is always inactive, so stats are not collected
@@ -88,10 +98,16 @@ StatsCollectorCtx: ContextVar[BaseStatsCollector] = ContextVar(
 def collect_stats(collector: BaseStatsCollector):
     token = StatsCollectorCtx.set(collector)
     try:
-        yield
+        yield collector
     finally:
         StatsCollectorCtx.reset(token)
 
 
 def is_stats_collector_active():
     return StatsCollectorCtx.get().is_active
+
+
+def collect_stats_ctx(key: str, stats: List[str]) -> ContextManager:
+    if key in stats:
+        return collect_stats(DictStatsCollector())
+    return nullcontext(NullCollector())
