@@ -326,20 +326,20 @@ class BeaconLayerOptimizer(GPxQ):
             denominator = (Ltq * Ltq).sum(dim=0)  # [OC]
             c = numerator / (denominator + eps)  # [OC]
 
+            # Final quantized weights
+            final_w = c.unsqueeze(1) * q  # [OC, N]
+
+            # Undo permutation
+            if self.act_order:
+                inv_perm = torch.argsort(perm)
+                final_w = final_w[:, inv_perm]
+
             if not self.scales_only:
-                # Final quantized weights
-                final_w = c.unsqueeze(1) * q  # [OC, N]
-
-                # Undo permutation
-                if self.act_order:
-                    inv_perm = torch.argsort(perm)
-                    final_w = final_w[:, inv_perm]
-
                 weight[group_index] = final_w.to(dtype)
             all_scales.append(c)
 
         # Write the computed scales into Brevitas quantizer infrastructure
-        self._write_scales(all_scales)
+        self._write_scales(all_scales, final_w)
 
         del self.H
         if self.use_error_correction:
@@ -348,7 +348,7 @@ class BeaconLayerOptimizer(GPxQ):
         if hasattr(self.layer, 'offload_params'):
             self.layer.offload_params(self.layer)
 
-    def _write_scales(self, all_scales):
+    def _write_scales(self, all_scales, final_w):
         """
         Write the Beacon-computed per-channel scaling factors into the Brevitas
         quantizer's scaling_impl.value parameter.

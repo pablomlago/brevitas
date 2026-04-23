@@ -12,6 +12,9 @@ attn_scale_precision: null
 attn_scale_type: null
 awq_clip: false
 awq_scale: false
+beacon: false
+beacon_num_loops: 5
+beacon_scales_only: false
 bias_corr: false
 bos_preprocessing: null
 checkpoint_name: null

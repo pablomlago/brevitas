@@ -278,6 +278,14 @@ def create_args_parser() -> ArgumentParser:
         type=int,
         default=5,
         help='Number of refinement loops for Beacon (default: %(default)s). Paper recommends 4-6.')
+    parser.add_argument(
+        '--beacon-scales-only',
+        action='store_true',
+        default=False,
+        help='Only update quantizer scales without modifying weight tensors. '
+        'Use when a subsequent algorithm (GPTQ, GPFQ, Qronos) handles weight quantization. '
+        'Required when --gptq, --gpfq, or --qronos are also enabled. '
+        'Default: %(default)s.')
     parser.add_argument('--gptq', action='store_true', help='Apply GPTQ.')
     parser.add_argument('--gpfq', action='store_true', help='Apply GPFQ.')
     parser.add_argument(
@@ -537,13 +545,14 @@ def validate(args: Namespace, extra_args: Optional[List[str]] = None) -> None:
                 "Beacon requires Brevitas quantization wrappers. "
                 "--no-quantize is set; Beacon will have no effect.")
         assert args.weight_quant_format == 'int', 'Beacon requires --weight-quant-format=int because it relies on integer quantization for the weight quantization grid.'
+        assert args.weight_quant_granularity == 'per_channel', 'Beacon requires --weight-quant-granularity=per_channel because it relies on per-channel quantization for the weight quantization grid.'
         assert args.weight_scale_precision == 'signed_float_scale', \
             'Error: Beacon requires --weight-scale-precision=signed_float_scale because ' \
             'Beacon scale factors can be negative.'
         if args.gptq or args.gpfq or args.qronos:
-            warn(
-                "Beacon is enabled together with other GPxQ methods. "
-                "They will run sequentially in the order they appear in main.py.")
+            assert args.beacon_scales_only, \
+                'Error: --beacon-scales-only is required when combining Beacon with ' \
+                'GPTQ, GPFQ, or Qronos.'
     if not args.no_quantize:
         if args.weight_quant_rescaling_init is not None:
             assert args.weight_quant_rescaling_init > 0, \

@@ -651,8 +651,7 @@ def quantize_llm(args, extra_args=None):
             print("Checkpoint loaded.")
 
         if args.beacon and not args.load_checkpoint:
-            scales_only = args.gptq or args.gpfq or args.qronos
-            if scales_only:
+            if args.beacon_scales_only:
                 print("Applying Beacon (scales only, no error correction)...")
             else:
                 print("Applying Beacon...")
@@ -662,8 +661,8 @@ def quantize_llm(args, extra_args=None):
                 bit_width=args.weight_bit_width,
                 num_loops=args.beacon_num_loops,
                 act_order=args.gpxq_act_order,
-                scales_only=scales_only,
-                use_error_correction=not scales_only,
+                scales_only=args.beacon_scales_only,
+                use_error_correction=not args.beacon_scales_only,
                 block_name=args.gpxq_block_name,
                 buffer_device=args.gpxq_buffer_device)
             print("Beacon applied.")
@@ -722,10 +721,21 @@ def quantize_llm(args, extra_args=None):
         remove_weight_orig(model)
         if args.eval and not args.no_quantize:
             print("Model eval...")
-            with torch.no_grad(), quant_inference_mode(model, compile=args.compile_eval):
-                model(**next(iter(calibration_loader)))
-                quant_ppl = compute_perplexity(
-                    model, validation_loader, context_length=args.seqlen // 2, tokenizer=tokenizer)
+            if args.beacon and not args.beacon_scales_only:
+                with torch.no_grad():
+                    quant_ppl = compute_perplexity(
+                        model,
+                        validation_loader,
+                        context_length=args.seqlen // 2,
+                        tokenizer=tokenizer)
+            else:
+                with torch.no_grad(), quant_inference_mode(model, compile=args.compile_eval):
+                    model(**next(iter(calibration_loader)))
+                    quant_ppl = compute_perplexity(
+                        model,
+                        validation_loader,
+                        context_length=args.seqlen // 2,
+                        tokenizer=tokenizer)
             print(f"Quantized perplexity ({args.dataset}): {quant_ppl:.3f}")
         few_shot_eval_results = dict()
         if args.few_shot_eval == 'lm_eval':

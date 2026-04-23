@@ -1,0 +1,11 @@
+model: facebook/opt-125m
+weight_bit_width: 3
+weight_scale_precision: signed_float_scale
+weight_quant_granularity: per_channel
+gptq: true
+beacon: true
+beacon_num_loops: 5
+nsamples: 128
+gpxq_block_name: model.decoder.layers
+gpxq_act_order: true
+eval: true
