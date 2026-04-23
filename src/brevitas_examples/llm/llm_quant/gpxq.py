@@ -8,6 +8,8 @@ from accelerate.utils.operations import send_to_device
 import torch
 from tqdm import tqdm
 
+from brevitas.graph.beacon import beacon_mode
+from brevitas.graph.beacon import BeaconLayerOptimizer
 from brevitas.graph.calibrate import quantization_status_manager
 from brevitas.graph.gpfq import GPFQ
 from brevitas.graph.gpfq import gpfq_mode
@@ -292,3 +294,70 @@ def apply_magr(
             for inps in tqdm(dataloader, desc="Calculating covariances..."):
                 magr_model(**inps)
             magr.update()
+
+
+@torch.no_grad()
+def apply_beacon(
+        model,
+        dataloader,
+        bit_width,
+        num_loops=5,
+        act_order=False,
+        scales_only=False,
+        use_error_correction=True,
+        block_name=None,
+        buffer_device='cpu',
+        buffer_dtype=torch.float32):
+    """
+    Apply Beacon post-training quantization to a Brevitas quantized model.
+
+    Beacon quantizes weights onto a fixed unscaled integer grid and determines
+    optimal per-channel scaling factors analytically by maximizing cosine similarity.
+    The computed scales are written back into the Brevitas quantizer infrastructure.
+
+    Uses the same block_optimization / gpfq_mode infrastructure as GPFQ and Qronos.
+
+    Args:
+        model: Brevitas quantized model (QuantLinear layers).
+        dataloader: Calibration data loader.
+        bit_width: Number of bits for Beacon's quantization grid.
+        num_loops: Number of refinement loops (default: 5, paper recommends 4-6).
+        act_order: Whether to order columns by activation magnitude.
+        scales_only: If True, only update the quantizer scales without modifying
+            the weight tensors. Use this when a subsequent algorithm (GPTQ, GPFQ,
+            Qronos) will handle weight quantization.
+        use_error_correction: If True (default), use two-pass mode with distinct
+            quantized and float inputs (H and G matrices). If False, use single-pass
+            mode (H only, L = L_tilde = R). The paper recommends no error correction
+            when combining Beacon with GPTQ (GPTQ* variant in Table 3).
+        block_name: Attribute name for transformer blocks (e.g., 'model.layers').
+            If provided, uses blockwise optimization for memory efficiency.
+        buffer_device: Device for intermediate buffers ('cpu' or 'same').
+        buffer_dtype: Dtype for intermediate buffers.
+    """
+    if block_name is not None:
+        context_manager_kwargs = {
+            'act_order': act_order,
+            'create_weight_orig': True,
+            'bit_width': bit_width,
+            'num_loops': num_loops,
+            'scales_only': scales_only,
+            'use_error_correction': use_error_correction,
+            'device': buffer_device,
+            'dtype': buffer_dtype}
+        block_optimization(model, dataloader, block_name, beacon_mode, context_manager_kwargs)
+    else:
+        with beacon_mode(model,
+                         act_order=act_order,
+                         create_weight_orig=True,
+                         bit_width=bit_width,
+                         num_loops=num_loops,
+                         scales_only=scales_only,
+                         use_error_correction=use_error_correction,
+                         device=buffer_device,
+                         dtype=buffer_dtype) as bcn:
+            bcn_model = bcn.model
+            for _ in tqdm(range(bcn.num_layers)):
+                for inps in dataloader:
+                    bcn_model(**inps)
+                bcn.update()

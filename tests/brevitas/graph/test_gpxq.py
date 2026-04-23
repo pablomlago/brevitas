@@ -9,6 +9,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.utils.data import TensorDataset
 
+from brevitas.graph.beacon import beacon_mode
 from brevitas.graph.gpfq import GPFQ
 from brevitas.graph.gpfq import gpfq_mode
 from brevitas.graph.gptq import gptq_mode
@@ -153,3 +154,67 @@ def test_magr(toy_model, request):
     dataloader = DataLoader(dataset, batch_size=16, num_workers=0, pin_memory=True, shuffle=True)
 
     apply_magr(model, dataloader)
+
+
+@torch.no_grad()
+def apply_beacon_test(
+        calib_loader: DataLoader, model: nn.Module, act_order: bool, use_quant_activations: bool):
+    model.eval()
+    dtype = next(model.parameters()).dtype
+    device = next(model.parameters()).device
+    with beacon_mode(model,
+                     act_order=act_order,
+                     use_quant_activations=use_quant_activations,
+                     create_weight_orig=True,
+                     bit_width=4,
+                     num_loops=2,
+                     device='same') as bcn:
+        bcn_model = bcn.model
+        for _ in range(bcn.num_layers):
+            for _, (images, _) in enumerate(calib_loader):
+                images = images.to(device)
+                images = images.to(dtype)
+                bcn_model(images)
+            bcn.update()
+
+
+apply_gpxq_func_map["beacon"] = apply_beacon_test
+
+
+@pytest.mark.parametrize("act_order", [True, False])
+@pytest.mark.parametrize("use_quant_activations", [True, False])
+@pytest.mark.parametrize("use_error_correction", [True, False])
+def test_beacon(toy_quant_model, act_order, use_quant_activations, use_error_correction, request):
+    test_id = request.node.callspec.id
+
+    torch.manual_seed(SEED)
+
+    model_class = toy_quant_model
+    model = model_class()
+    if 'mha' in test_id:
+        inp = torch.randn(32, *IN_SIZE_LINEAR[1:])
+    else:
+        inp = torch.randn(32, *IN_SIZE_CONV_SMALL[1:])
+    model.eval()
+    model(inp)  # test forward pass and collect scaling factors
+    dataset = TensorDataset(inp, inp)
+    calib_loader = DataLoader(dataset, batch_size=16, num_workers=0, pin_memory=True, shuffle=True)
+
+    model.eval()
+    dtype = next(model.parameters()).dtype
+    device = next(model.parameters()).device
+    with beacon_mode(model,
+                     act_order=act_order,
+                     use_quant_activations=use_quant_activations,
+                     create_weight_orig=True,
+                     use_error_correction=use_error_correction,
+                     bit_width=4,
+                     num_loops=2,
+                     device='same') as bcn:
+        bcn_model = bcn.model
+        for _ in range(bcn.num_layers):
+            for _, (images, _) in enumerate(calib_loader):
+                images = images.to(device)
+                images = images.to(dtype)
+                bcn_model(images)
+            bcn.update()

@@ -57,6 +57,7 @@ from brevitas_examples.llm.llm_quant.export import BlockQuantProxyLevelManager
 from brevitas_examples.llm.llm_quant.export import brevitas_proxy_export_mode
 from brevitas_examples.llm.llm_quant.export import convert_hf_hparams_to_gguf
 from brevitas_examples.llm.llm_quant.export import gguf_mapping
+from brevitas_examples.llm.llm_quant.gpxq import apply_beacon
 from brevitas_examples.llm.llm_quant.gpxq import apply_gpfq
 from brevitas_examples.llm.llm_quant.gpxq import apply_gptq
 from brevitas_examples.llm.llm_quant.gpxq import apply_magr
@@ -649,6 +650,24 @@ def quantize_llm(args, extra_args=None):
             model = offload_model(model)
             print("Checkpoint loaded.")
 
+        if args.beacon and not args.load_checkpoint:
+            scales_only = args.gptq or args.gpfq or args.qronos
+            if scales_only:
+                print("Applying Beacon (scales only, no error correction)...")
+            else:
+                print("Applying Beacon...")
+            apply_beacon(
+                model,
+                calibration_loader,
+                bit_width=args.weight_bit_width,
+                num_loops=args.beacon_num_loops,
+                act_order=args.gpxq_act_order,
+                scales_only=scales_only,
+                use_error_correction=not scales_only,
+                block_name=args.gpxq_block_name,
+                buffer_device=args.gpxq_buffer_device)
+            print("Beacon applied.")
+
         if args.gptq and not args.load_checkpoint:
             print("Applying GPTQ...")
             apply_gptq(
@@ -733,7 +752,6 @@ def quantize_llm(args, extra_args=None):
             print("Few shot eval results")
             pprint.pprint(few_shot_eval_results)
         elif args.few_shot_eval == 'lighteval':
-
             with torch.no_grad(), quant_inference_mode(model, compile=args.compile_eval):
                 model(**next(iter(calibration_loader)))
                 remove_hooks(model)

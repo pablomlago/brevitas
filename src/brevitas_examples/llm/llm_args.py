@@ -272,6 +272,12 @@ def create_args_parser() -> ArgumentParser:
     parser.add_argument('--qronos', action='store_true', help='Apply Qronos.')
     parser.add_argument(
         '--qronos-alpha', default=1e-6, type=float, help='Alpha for Qronos. Default: 1e-6')
+    parser.add_argument('--beacon', action='store_true', help='Apply Beacon PTQ.')
+    parser.add_argument(
+        '--beacon-num-loops',
+        type=int,
+        default=5,
+        help='Number of refinement loops for Beacon (default: %(default)s). Paper recommends 4-6.')
     parser.add_argument('--gptq', action='store_true', help='Apply GPTQ.')
     parser.add_argument('--gpfq', action='store_true', help='Apply GPFQ.')
     parser.add_argument(
@@ -525,6 +531,19 @@ def validate(args: Namespace, extra_args: Optional[List[str]] = None) -> None:
     elif args.rotation == 'fused_no_fx':
         assert not args.convert_layernorm_to_rmsnorm, 'LayerNorm is automatically replaced with RMSNorm when running with --rotation=fused_no_fx. Remove the flag --convert-layernorm-to-rmsnorm'
         assert args.replace_rmsnorm, 'Graph rotation requires to replace HF RMSNorm with PyTorch ones (torch 2.4+ require)'
+    if args.beacon:
+        if args.no_quantize:
+            warn(
+                "Beacon requires Brevitas quantization wrappers. "
+                "--no-quantize is set; Beacon will have no effect.")
+        assert args.weight_quant_format == 'int', 'Beacon requires --weight-quant-format=int because it relies on integer quantization for the weight quantization grid.'
+        assert args.weight_scale_precision == 'signed_float_scale', \
+            'Error: Beacon requires --weight-scale-precision=signed_float_scale because ' \
+            'Beacon scale factors can be negative.'
+        if args.gptq or args.gpfq or args.qronos:
+            warn(
+                "Beacon is enabled together with other GPxQ methods. "
+                "They will run sequentially in the order they appear in main.py.")
     if not args.no_quantize:
         if args.weight_quant_rescaling_init is not None:
             assert args.weight_quant_rescaling_init > 0, \
